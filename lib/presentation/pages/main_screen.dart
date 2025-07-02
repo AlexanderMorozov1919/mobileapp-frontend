@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'schedule_screen.dart';
-import 'stationary_screen.dart';
+import 'patient_list_screen.dart'; // Переименованный файл
 import 'visit_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -11,19 +11,17 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Индекс текущей вкладки
+  int _currentIndex = 0;
 
-  // Список экранов приложения
   final List<Widget> _pages = [
-    const ScheduleScreen(), // Экран расписания
-    const StationaryScreen(), // Экран стационара (заглушка)
-    const VisitScreen(), // Экран выездов (заглушка)
+    ScheduleScreen(),
+    PatientListScreen(), // Переименованный виджет
+    VisitScreen(),
   ];
 
-  // Заголовки для AppBar
   final List<String> _pageTitles = [
     'Расписание',
-    'Стационар',
+    'Список пациентов', // Новый заголовок
     'Выезд',
   ];
 
@@ -34,9 +32,7 @@ class _MainScreenState extends State<MainScreen> {
         title: Text(_pageTitles[_currentIndex]),
         centerTitle: true,
       ),
-      // Отображение текущего экрана
       body: _pages[_currentIndex],
-      // Нижняя навигационная панель
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -46,8 +42,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Расписание',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_hospital),
-            label: 'Стационар',
+            icon: Icon(Icons.people), // Новая иконка
+            label: 'Пациенты', // Новое название
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car),
