@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'schedule_screen.dart';
 import 'patient_list_screen.dart'; // Переименованный файл
-import 'visit_screen.dart';
+import 'calls_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,14 +15,14 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     ScheduleScreen(),
-    PatientListScreen(), // Переименованный виджет
-    VisitScreen(),
+    PatientListScreen(),
+    CallsScreen(), // Новый экран вызовов
   ];
 
   final List<String> _pageTitles = [
     'Расписание',
-    'Список пациентов', // Новый заголовок
-    'Выезд',
+    'Список пациентов',
+    'Вызовы', // Новый заголовок
   ];
 
   @override
@@ -42,12 +42,12 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Расписание',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people), // Новая иконка
-            label: 'Пациенты', // Новое название
+            icon: Icon(Icons.people),
+            label: 'Пациенты',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Выезд',
+            icon: Icon(Icons.local_hospital), // Новая иконка для вызовов
+            label: 'Вызовы', // Новое название
           ),
         ],
         selectedItemColor: Colors.blue,
