@@ -8,12 +8,13 @@ import 'domain/usecases/login_usecase.dart';
 
 // Data Layer
 import 'data/datasources/auth_remote_data_source.dart';
-import 'data/repositories/auth_repository_impl.dart';
 import 'data/models/user_model.dart';
+import 'data/repositories/auth_repository_impl.dart';
 
 // Presentation Layer
 import 'presentation/pages/login_page.dart';
-import 'presentation/pages/register_page.dart';
+import 'presentation/pages/main_screen.dart';
+import 'presentation/pages/register_page.dart'; // Добавлен импорт
 import 'presentation/bloc/login_bloc.dart';
 import 'presentation/bloc/register_bloc.dart';
 
@@ -26,55 +27,58 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Создаем репозиторий с удаленным источником данных
-    final AuthRepository authRepository = AuthRepositoryImpl(
+    final authRepository = AuthRepositoryImpl(
       remoteDataSource: AuthRemoteDataSourceImpl(),
     );
-
-    return MultiRepositoryProvider(
+    
+    return MultiBlocProvider(
       providers: [
-        RepositoryProvider<AuthRepository>(create: (_) => authRepository),
-      ],
-      child: MultiBlocProvider(
-        providers: [
-          // Провайдер для BLoC авторизации
-          BlocProvider(
-            create: (context) => LoginBloc(
-              loginUseCase: LoginUseCase(
-                context.read<AuthRepository>(),
-              ),
-            ),
+        BlocProvider(
+          create: (context) => LoginBloc(
+            loginUseCase: LoginUseCase(authRepository),
           ),
-          
-          // Провайдер для BLoC регистрации
-          BlocProvider(
-            create: (context) => RegisterBloc(
-              repository: context.read<AuthRepository>(),
-            ),
-          ),
-        ],
-        child: MaterialApp(
-          title: 'Система авторизации',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            inputDecorationTheme: const InputDecorationTheme(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            ),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                textStyle: const TextStyle(fontSize: 18),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ),
-          initialRoute: '/login',
-          routes: {
-            '/login': (context) => LoginPage(),
-            '/register': (context) => RegisterPage(),
-          },
         ),
+        BlocProvider(
+          create: (context) => RegisterBloc(
+            repository: authRepository,
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Медицинская информационная система',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 1,
+            titleTextStyle: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              textStyle: const TextStyle(fontSize: 18),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            selectedItemColor: Colors.blue,
+            unselectedItemColor: Colors.grey,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+          ),
+        ),
+        home: LoginPage(),
+        routes: {
+          '/main': (context) => MainScreen(),
+          '/register': (context) => const RegisterPage(), // Добавлен маршрут
+        },
       ),
     );
   }
