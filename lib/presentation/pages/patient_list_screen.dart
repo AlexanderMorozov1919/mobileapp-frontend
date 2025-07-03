@@ -105,21 +105,28 @@ class _PatientListScreenState extends State<PatientListScreen> {
                     hintText: 'Поиск по ФИО пациента',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(30.0), // Более круглые углы
                     ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               // Кнопка фильтра
-              IconButton(
-                icon: const Icon(Icons.filter_list, size: 30),
-                onPressed: () {
-                  // TODO: Реализовать функционал фильтрации
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Фильтрация будет реализована позже')),
-                  );
-                },
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.filter_list, size: 25, color: Colors.white),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Фильтрация будет реализована позже')),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -139,11 +146,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
-  // Виджет карточки пациента
   Widget _buildPatientCard(Map<String, dynamic> patient) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -165,7 +170,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 // Номер палаты
                 Row(
                   children: [
-                    const Icon(Icons.bed, size: 20, color: Colors.grey),
+                    Icon(Icons.bed, size: 20, color: Theme.of(context).primaryColor),
                     const SizedBox(width: 5),
                     Text(
                       patient['room'],
@@ -179,7 +184,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 Flexible(
                   child: Row(
                     children: [
-                      const Icon(Icons.medical_services, size: 20, color: Colors.grey),
+                      Icon(Icons.medical_services, size: 20, color: Theme.of(context).primaryColor),
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
@@ -201,11 +206,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
               children: [
                 // Кнопка истории болезни
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.history, size: 18),
-                  label: const Text('История'),
-                  onPressed: () {
-                    // TODO: Переход к истории болезни
-                  },
+                  icon: Icon(Icons.history, size: 18, color: Theme.of(context).primaryColor),
+                  label: Text('История', style: TextStyle(color: Theme.of(context).primaryColor)),
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Theme.of(context).primaryColor),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 
@@ -213,9 +219,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 ElevatedButton.icon(
                   icon: const Icon(Icons.visibility, size: 18),
                   label: const Text('Подробнее'),
-                  onPressed: () {
-                    // TODO: Переход к детальной информации
-                  },
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD2B48C), // Бежевый
+                  ),
                 ),
               ],
             ),

@@ -92,6 +92,7 @@ class _CallsScreenState extends State<CallsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Кнопка добавления вызова
               ElevatedButton.icon(
                 icon: const Icon(Icons.add, size: 20),
                 label: const Text('Добавить вызов'),
@@ -101,17 +102,31 @@ class _CallsScreenState extends State<CallsScreen> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD2B48C), // Бежевый
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.refresh, size: 30),
-                onPressed: _refreshCalls,
-                tooltip: 'Обновить список',
+              
+              // Кнопка обновления
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.refresh, size: 25, color: Colors.white),
+                  onPressed: _refreshCalls,
+                  tooltip: 'Обновить список',
+                ),
               ),
             ],
           ),
         ),
+        
+        // Список вызовов
         Expanded(
           child: ListView.builder(
             itemCount: _filteredCalls.length,
@@ -130,8 +145,7 @@ class _CallsScreenState extends State<CallsScreen> {
     
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: isEmergency ? const Color(0xFFFFEBEE) : Colors.white,
-      elevation: 3,
+      color: isEmergency ? const Color(0xFFFFEBEE).withOpacity(0.7) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -140,27 +154,34 @@ class _CallsScreenState extends State<CallsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Статус вызова
                 Chip(
                   label: Text(
                     call['status'],
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isEmergency ? Colors.red : Colors.blue,
+                      color: isEmergency ? Colors.red.shade800 : Theme.of(context).primaryColor,
                     ),
                   ),
                   backgroundColor: isEmergency ? 
-                    Colors.red.shade50 : Colors.blue.shade50,
+                    Colors.red.shade50 : Colors.grey.shade200,
                 ),
+                
+                // Время вызова
                 Text(
                   call['time'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ],
             ),
+            
             const SizedBox(height: 12),
+            
+            // ФИО пациента
             Text(
               call['patientName'],
               style: const TextStyle(
@@ -169,10 +190,12 @@ class _CallsScreenState extends State<CallsScreen> {
               ),
             ),
             const SizedBox(height: 8),
+            
+            // Адрес
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on, size: 20, color: Colors.grey),
+                Icon(Icons.location_on, size: 20, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -183,9 +206,11 @@ class _CallsScreenState extends State<CallsScreen> {
               ],
             ),
             const SizedBox(height: 8),
+            
+            // Лечащий врач
             Row(
               children: [
-                const Icon(Icons.person_outline, size: 20, color: Colors.grey),
+                Icon(Icons.person_outline, size: 20, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   'Врач: ${call['doctor']}',
@@ -193,20 +218,31 @@ class _CallsScreenState extends State<CallsScreen> {
                 ),
               ],
             ),
+            
+            // Кнопки действий
             const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // Кнопка принятия вызова
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text('Принять'),
+                  icon: Icon(Icons.check_circle_outline, size: 18, color: Theme.of(context).primaryColor),
+                  label: Text('Принять', style: TextStyle(color: Theme.of(context).primaryColor)),
                   onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Theme.of(context).primaryColor),
+                  ),
                 ),
                 const SizedBox(width: 10),
+                
+                // Кнопка деталей
                 ElevatedButton.icon(
                   icon: const Icon(Icons.info_outline, size: 18),
                   label: const Text('Детали'),
                   onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD2B48C), // Бежевый
+                  ),
                 ),
               ],
             ),

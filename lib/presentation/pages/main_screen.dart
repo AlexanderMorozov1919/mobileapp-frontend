@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'schedule_screen.dart';
-import 'patient_list_screen.dart'; // Переименованный файл
+import 'patient_list_screen.dart';
 import 'calls_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,44 +16,76 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     ScheduleScreen(),
     PatientListScreen(),
-    CallsScreen(), // Новый экран вызовов
-  ];
-
-  final List<String> _pageTitles = [
-    'Расписание',
-    'Список пациентов',
-    'Вызовы', // Новый заголовок
+    CallsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_pageTitles[_currentIndex]),
+        title: Text(
+          _currentIndex == 0
+              ? 'Расписание'
+              : _currentIndex == 1
+                  ? 'Список пациентов'
+                  : 'Вызовы',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: const Color(0xFF8B8B8B), // Серый
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Расписание',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_today),
+                activeIcon: Icon(Icons.calendar_today, size: 28),
+                label: 'Расписание',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.people_outline),
+                activeIcon: Icon(Icons.people, size: 28),
+                label: 'Пациенты',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.local_hospital_outlined),
+                activeIcon: Icon(Icons.local_hospital, size: 28),
+                label: 'Вызовы',
+              ),
+            ],
+            selectedItemColor: const Color(0xFFD2B48C), // Бежевый
+            unselectedItemColor: Colors.white70,
+            backgroundColor: const Color(0xFF8B8B8B), // Серый
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            elevation: 0,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Пациенты',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_hospital), // Новая иконка для вызовов
-            label: 'Вызовы', // Новое название
-          ),
-        ],
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }
