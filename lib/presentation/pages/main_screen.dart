@@ -29,15 +29,10 @@ class _MainScreenState extends State<MainScreen> {
               : _currentIndex == 1
                   ? 'Список пациентов'
                   : 'Вызовы',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF8B8B8B), // Серый
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(

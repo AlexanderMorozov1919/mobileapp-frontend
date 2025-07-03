@@ -75,6 +75,18 @@ class _PatientListScreenState extends State<PatientListScreen> {
     _filteredPatients = _patients;
   }
 
+  void addNewPatient(Map<String, dynamic> patientData) {
+    setState(() {
+      _patients.add({
+        'id': _patients.length + 1,
+        'fullName': patientData['fullName'] ?? 'Новый пациент',
+        'room': 'Палата не назначена',
+        'diagnosis': 'Диагноз не установлен',
+      });
+      _filteredPatients = _patients;
+    });
+  }
+
   void _filterPatients() {
     final query = _searchController.text.toLowerCase();
     if (query.isEmpty) {
@@ -230,5 +242,17 @@ class _PatientListScreenState extends State<PatientListScreen> {
         ),
       ),
     );
+
+    void addNewPatient(Map<String, dynamic> patientData) {
+    setState(() {
+      _patients.add({
+        'id': _patients.length + 1,
+        'fullName': patientData['fullName'] ?? 'Новый пациент',
+        'room': 'Палата не назначена',
+        'diagnosis': 'Диагноз не установлен',
+      });
+      _filteredPatients = _patients;
+    });
+    }
   }
 }

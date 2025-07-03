@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_patient_screen.dart';
 
 class CallsScreen extends StatefulWidget {
   const CallsScreen({super.key});
@@ -83,60 +84,66 @@ class _CallsScreenState extends State<CallsScreen> {
     });
   }
 
-  @override
+  void _addNewPatient(BuildContext context) {
+    // Открываем экран добавления пациента и ждем результат
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddPatientScreen(),
+      ),
+    ).then((newPatient) {
+      if (newPatient != null) {
+        // Переходим на экран пациентов и добавляем нового пациента
+        // В реальном приложении здесь будет вызов метода добавления
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Новый пациент добавлен'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
+  }
+
+   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Кнопка добавления вызова
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text('Добавить вызов'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Добавление вызова будет реализовано позже')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD2B48C), // Бежевый
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-              ),
-              
-              // Кнопка обновления
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.refresh, size: 25, color: Colors.white),
-                  onPressed: _refreshCalls,
-                  tooltip: 'Обновить список',
-                ),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Вызовы'),
+        backgroundColor: const Color(0xFF8B8B8B), // Серый
+        foregroundColor: Colors.white,
+        actions: [
+          // Кнопка обновления справа
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshCalls,
+            tooltip: 'Обновить список',
           ),
-        ),
-        
-        // Список вызовов
-        Expanded(
-          child: ListView.builder(
-            itemCount: _filteredCalls.length,
-            itemBuilder: (context, index) {
-              final call = _filteredCalls[index];
-              return _buildCallCard(call);
-            },
+        ],
+        leading: // Кнопка добавления слева
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Color(0xFFD2B48C), // Бежевый
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, size: 20),
+            ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddPatientScreen()),
+            ),
+            tooltip: 'Добавить пациента',
           ),
-        ),
-      ],
+      ),
+      body: ListView.builder(
+        itemCount: _filteredCalls.length,
+        itemBuilder: (context, index) {
+          final call = _filteredCalls[index];
+          return _buildCallCard(call);
+        },
+      ),
     );
   }
 
