@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'patient_detail_screen.dart';
+import 'patient_history_screen.dart';
 
 class PatientListScreen extends StatefulWidget {
   const PatientListScreen({super.key});
@@ -29,48 +31,126 @@ class _PatientListScreenState extends State<PatientListScreen> {
   void _loadPatients() {
     // Фиктивные данные пациентов
     _patients = [
-      {
+    {
         'id': 1,
         'fullName': 'Иванов Иван Иванович',
         'room': 'Палата 101',
         'diagnosis': 'Гипертоническая болезнь II ст.',
-        'photoUrl': null,
-      },
-      {
+        'gender': 'Мужской',
+        'birthDate': '15.03.1965',
+        'snils': '123-456-789 01',
+        'oms': '1234567890123456',
+        'passport': '45 06 123456',
+        'address': 'г. Москва, ул. Ленина, д. 15, кв. 42',
+        'phone': '+7 (999) 123-45-67',
+        'email': 'ivanov@example.com',
+        'contraindications': 'Аллергия на пенициллин',
+    },
+    {
         'id': 2,
-        'fullName': 'Петрова Мария Сергеевна',
+        'fullName': 'Петрова Анна Сергеевна',
         'room': 'Палата 205',
         'diagnosis': 'Сахарный диабет 2 типа',
-        'photoUrl': null,
-      },
-      {
+        'gender': 'Женский',
+        'birthDate': '22.07.1978',
+        'snils': '234-567-890 12',
+        'oms': '2345678901234567',
+        'passport': '40 07 234567',
+        'address': 'г. Санкт-Петербург, ул. Пушкина, д. 10, кв. 15',
+        'phone': '+7 (911) 234-56-78',
+        'email': 'petrova@example.com',
+        'contraindications': 'Нет',
+    },
+    {
         'id': 3,
-        'fullName': 'Сидоров Алексей Петрович',
-        'room': 'Палата 312',
-        'diagnosis': 'Острый бронхит',
-        'photoUrl': null,
-      },
-      {
+        'fullName': 'Сидоров Михаил Петрович',
+        'room': 'Палата 102',
+        'diagnosis': 'ХОБЛ, среднетяжелое течение',
+        'gender': 'Мужской',
+        'birthDate': '05.11.1952',
+        'snils': '345-678-901 23',
+        'oms': '3456789012345678',
+        'passport': '41 08 345678',
+        'address': 'г. Новосибирск, ул. Гагарина, д. 5, кв. 33',
+        'phone': '+7 (912) 345-67-89',
+        'email': 'sidorov@example.com',
+        'contraindications': 'Бронхиальная астма',
+    },
+    {
         'id': 4,
-        'fullName': 'Кузнецова Елена Викторовна',
-        'room': 'Палата 104',
-        'diagnosis': 'Язвенная болезнь желудка',
-        'photoUrl': null,
-      },
-      {
+        'fullName': 'Кузнецова Елена Владимировна',
+        'room': 'Палата 306',
+        'diagnosis': 'Остеоартроз коленных суставов',
+        'gender': 'Женский',
+        'birthDate': '18.09.1960',
+        'snils': '456-789-012 34',
+        'oms': '4567890123456789',
+        'passport': '42 09 456789',
+        'address': 'г. Екатеринбург, ул. Мира, д. 20, кв. 7',
+        'phone': '+7 (913) 456-78-90',
+        'email': 'kuznetsova@example.com',
+        'contraindications': 'Непереносимость НПВС',
+    },
+    {
         'id': 5,
-        'fullName': 'Николаев Дмитрий Олегович',
-        'room': 'Палата 209',
-        'diagnosis': 'Остеохондроз позвоночника',
-        'photoUrl': null,
-      },
-      {
+        'fullName': 'Смирнов Алексей Дмитриевич',
+        'room': 'Палата 103',
+        'diagnosis': 'ИБС, стенокардия напряжения II ФК',
+        'gender': 'Мужской',
+        'birthDate': '30.01.1972',
+        'snils': '567-890-123 45',
+        'oms': '5678901234567890',
+        'passport': '43 10 567890',
+        'address': 'г. Казань, ул. Чехова, д. 12, кв. 24',
+        'phone': '+7 (914) 567-89-01',
+        'email': 'smirnov@example.com',
+        'contraindications': 'Язвенная болезнь желудка',
+    },
+    {
         'id': 6,
-        'fullName': 'Фёдорова Анна Михайловна',
-        'room': 'Палата 303',
-        'diagnosis': 'Пневмония',
-        'photoUrl': null,
-      },
+        'fullName': 'Федорова Ольга Игоревна',
+        'room': 'Палата 207',
+        'diagnosis': 'Хронический пиелонефрит',
+        'gender': 'Женский',
+        'birthDate': '14.05.1985',
+        'snils': '678-901-234 56',
+        'oms': '6789012345678901',
+        'passport': '44 11 678901',
+        'address': 'г. Нижний Новгород, ул. Горького, д. 8, кв. 19',
+        'phone': '+7 (915) 678-90-12',
+        'email': 'fedorova@example.com',
+        'contraindications': 'Хроническая почечная недостаточность',
+    },
+    {
+        'id': 7,
+        'fullName': 'Попов Денис Александрович',
+        'room': 'Палата 104',
+        'diagnosis': 'Язвенная болезнь 12-перстной кишки',
+        'gender': 'Мужской',
+        'birthDate': '27.12.1979',
+        'snils': '789-012-345 67',
+        'oms': '7890123456789012',
+        'passport': '45 12 789012',
+        'address': 'г. Самара, ул. Куйбышева, д. 25, кв. 11',
+        'phone': '+7 (916) 789-01-23',
+        'email': 'popov@example.com',
+        'contraindications': 'Аллергия на метронидазол',
+    },
+    {
+        'id': 8,
+        'fullName': 'Волкова Татьяна Николаевна',
+        'room': 'Палата 308',
+        'diagnosis': 'Бронхиальная астма, атопическая',
+        'gender': 'Женский',
+        'birthDate': '03.08.1992',
+        'snils': '890-123-456 78',
+        'oms': '8901234567890123',
+        'passport': '46 13 890123',
+        'address': 'г. Ростов-на-Дону, ул. Садовая, д. 3, кв. 5',
+        'phone': '+7 (917) 890-12-34',
+        'email': 'volkova@example.com',
+        'contraindications': 'Поливалентная лекарственная аллергия',
+    }
     ];
     _filteredPatients = _patients;
   }
@@ -160,11 +240,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ФИО пациента
             Text(
@@ -213,46 +293,45 @@ class _PatientListScreenState extends State<PatientListScreen> {
             
             // Кнопки действий
             const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Кнопка истории болезни
-                OutlinedButton.icon(
-                  icon: Icon(Icons.history, size: 18, color: Theme.of(context).primaryColor),
-                  label: Text('История', style: TextStyle(color: Theme.of(context).primaryColor)),
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Theme.of(context).primaryColor),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                
-                // Кнопка подробнее
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.visibility, size: 18),
-                  label: const Text('Подробнее'),
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD2B48C), // Бежевый
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+             Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Кнопка истории болезни
+              OutlinedButton.icon(
+                icon: const Icon(Icons.history, size: 18),
+                label: const Text('История'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PatientHistoryScreen(
+                        patientId: patient['id'],
+                        patientName: patient['fullName'],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 10),
+              
+              // Кнопка подробнее
+              ElevatedButton.icon(
+                icon: const Icon(Icons.visibility, size: 18),
+                label: const Text('Подробнее'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PatientDetailScreen(patient: patient),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-
-    void addNewPatient(Map<String, dynamic> patientData) {
-    setState(() {
-      _patients.add({
-        'id': _patients.length + 1,
-        'fullName': patientData['fullName'] ?? 'Новый пациент',
-        'room': 'Палата не назначена',
-        'diagnosis': 'Диагноз не установлен',
-      });
-      _filteredPatients = _patients;
-    });
-    }
-  }
+    ),
+  );
+}
 }
