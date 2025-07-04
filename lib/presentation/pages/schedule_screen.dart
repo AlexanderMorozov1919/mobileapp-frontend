@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:demo_app/presentation/pages/patient_detail_screen.dart';
+import 'package:demo_app/presentation/pages/consultation_screen.dart';
 
-// Модель данных для приёма
 class Appointment {
   final int id;
   final String patientName;
@@ -18,11 +18,10 @@ class Appointment {
   });
 }
 
-// Статусы приёма
 enum AppointmentStatus {
-  scheduled,  // Запланирован
-  completed,  // Приём завершен
-  noShow,     // Не явился
+  scheduled,
+  completed,
+  noShow,
 }
 
 class ScheduleScreen extends StatefulWidget {
@@ -36,31 +35,29 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
   late final List<DateTime> _dates;
   List<Appointment> _appointments = [];
-  Map<int, AppointmentStatus> _appointmentStatus = {};
 
   @override
   void initState() {
     super.initState();
-    // Генерация дат: 7 дней назад и 7 дней вперед
     final today = DateTime.now();
     _dates = List.generate(15, (index) => today.add(Duration(days: index - 7)));
     _loadAppointments();
   }
 
-  // Загрузка фиктивных данных приёмов
   void _loadAppointments() {
-    _appointments = List.generate(8, (index) {
-      final hour = 8 + index;
-      return Appointment(
-        id: index,
-        patientName: _getRandomPatientName(index),
-        cabinet: '${201 + index % 3}',
-        time: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, hour),
-      );
+    setState(() {
+      _appointments = List.generate(8, (index) {
+        final hour = 8 + index;
+        return Appointment(
+          id: index,
+          patientName: _getRandomPatientName(index),
+          cabinet: '${201 + index % 3}',
+          time: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, hour),
+        );
+      });
     });
   }
 
-  // Генерация случайного имени пациента
   String _getRandomPatientName(int index) {
     final names = [
       'Иванов И.И.', 'Петрова А.С.', 'Сидоров Д.К.', 
@@ -70,8 +67,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return names[index % names.length];
   }
 
-  // Показ опций для приёма
-  void _showAppointmentOptions(BuildContext context, int appointmentId) {
+  void _showAppointmentOptions(BuildContext context, Appointment appointment) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -80,44 +76,30 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.person, color: Colors.blue),
-                title: const Text('Информация о пациенте', style: TextStyle(fontSize: 16)),
+                leading: const Icon(Icons.person),
+                title: const Text('Информация о пациенте'),
                 onTap: () {
                   Navigator.pop(context);
-                  _openPatientDetails(context, appointmentId);
+                  _openPatientDetails(context, appointment);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.medical_services, color: Colors.green),
-                title: const Text('Начать приём', style: TextStyle(fontSize: 16)),
+                leading: const Icon(Icons.medical_services),
+                title: const Text('Начать приём'),
                 onTap: () {
-                  setState(() {
-                    _appointmentStatus[appointmentId] = AppointmentStatus.completed;
-                  });
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Приём пациента ${_appointments.firstWhere((a) => a.id == appointmentId).patientName} начат'),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  _openConsultationScreen(context, appointment);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.close, color: Colors.red),
-                title: const Text('Не явился', style: TextStyle(fontSize: 16)),
+                leading: const Icon(Icons.close),
+                title: const Text('Не явился'),
                 onTap: () {
                   setState(() {
-                    _appointmentStatus[appointmentId] = AppointmentStatus.noShow;
+                    appointment.status = AppointmentStatus.noShow;
                   });
                   Navigator.pop(context);
                 },
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),
@@ -126,23 +108,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  // Открытие медкарты пациента
-  void _openPatientDetails(BuildContext context, int appointmentId) {
-    // Фиктивные данные пациента для демонстрации
-    final appointment = _appointments.firstWhere((a) => a.id == appointmentId);
+  void _openPatientDetails(BuildContext context, Appointment appointment) {
     final patient = {
-      'id': appointmentId,
+      'id': appointment.id,
       'fullName': appointment.patientName,
-      'room': 'Палата ${101 + appointmentId % 5}',
+      'room': 'Палата ${101 + appointment.id % 5}',
       'diagnosis': 'Диагноз не установлен',
-      'gender': appointmentId % 2 == 0 ? 'Мужской' : 'Женский',
-      'birthDate': '01.01.${1980 + appointmentId % 20}',
-      'snils': '123-456-789 0$appointmentId',
-      'oms': '123456789012345$appointmentId',
-      'passport': '45 06 12345$appointmentId',
-      'address': 'г. Москва, ул. Примерная, д. ${10 + appointmentId}, кв. ${20 + appointmentId}',
-      'phone': '+7 (999) 123-45-${appointmentId}',
-      'email': 'patient$appointmentId@example.com',
+      'gender': appointment.id % 2 == 0 ? 'Мужской' : 'Женский',
+      'birthDate': '01.01.${1980 + appointment.id % 20}',
+      'snils': '123-456-789 0${appointment.id}',
+      'oms': '123456789012345${appointment.id}',
+      'passport': '45 06 12345${appointment.id}',
+      'address': 'г. Москва, ул. Примерная, д. ${10 + appointment.id}, кв. ${20 + appointment.id}',
+      'phone': '+7 (999) 123-45-${appointment.id}',
+      'email': 'patient${appointment.id}@example.com',
       'contraindications': 'Нет',
     };
     
@@ -154,39 +133,66 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  // Построение карточки приёма
+  void _openConsultationScreen(BuildContext context, Appointment appointment) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConsultationScreen(
+          patientName: appointment.patientName,
+          appointmentType: 'appointment',
+          recordId: appointment.id,
+        ),
+      ),
+    ).then((result) {
+      if (result != null) {
+        setState(() {
+          appointment.status = AppointmentStatus.completed;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Заключение врача сохранено'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
+  }
+
   Widget _buildTimeSlot(Appointment appointment) {
-    final status = _appointmentStatus[appointment.id] ?? AppointmentStatus.scheduled;
     Color? cardColor;
     IconData? statusIcon;
     Color? iconColor;
     String statusText = '';
 
-    // Определение стилей в зависимости от статуса
-    if (status == AppointmentStatus.noShow) {
-      cardColor = Colors.red.shade100;
-      statusIcon = Icons.close;
-      iconColor = Colors.red.shade800;
-      statusText = 'Не явился';
-    } else if (status == AppointmentStatus.completed) {
-      cardColor = Colors.grey.shade300;
-      statusIcon = Icons.check;
-      iconColor = Colors.green;
-      statusText = 'Приём завершён';
+    switch (appointment.status) {
+      case AppointmentStatus.noShow:
+        cardColor = Colors.red.shade100;
+        statusIcon = Icons.close;
+        iconColor = Colors.red;
+        statusText = 'Не явился';
+        break;
+      case AppointmentStatus.completed:
+        cardColor = Colors.green.shade100;
+        statusIcon = Icons.check;
+        iconColor = Colors.green;
+        statusText = 'Приём завершён';
+        break;
+      case AppointmentStatus.scheduled:
+      default:
+        break;
     }
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       color: cardColor,
       child: InkWell(
-        onTap: () => _showAppointmentOptions(context, appointment.id),
+        onTap: () => _showAppointmentOptions(context, appointment),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Stack(
             children: [
               Row(
                 children: [
-                  // Временной интервал
                   Container(
                     width: 80,
                     child: Column(
@@ -211,11 +217,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ],
                     ),
                   ),
-                  
-                  // Вертикальный разделитель
                   const VerticalDivider(width: 20, thickness: 1),
-                  
-                  // Детали приема
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,8 +244,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 ],
               ),
-              // Иконка и текст статуса
-              if (status != AppointmentStatus.scheduled)
+              if (appointment.status != AppointmentStatus.scheduled)
                 Positioned(
                   top: 8,
                   right: 8,
@@ -267,8 +268,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
     );
   }
-  
-  // Преобразование номера дня недели в название
+
   String _getDayName(int weekday) {
     switch (weekday) {
       case 1: return 'Пн';
@@ -286,7 +286,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Карусель с датами
         SizedBox(
           height: 90,
           child: ListView.builder(
@@ -345,18 +344,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             },
           ),
         ),
-        
         const SizedBox(height: 20),
-        
-        // Заголовок с выбранной датой
         Text(
           'Расписание на ${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        
         const SizedBox(height: 20),
-        
-        // Список приёмов
         Expanded(
           child: ListView.builder(
             itemCount: _appointments.length,

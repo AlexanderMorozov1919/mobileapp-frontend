@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'add_patient_screen.dart';
+import 'consultation_screen.dart';
 
 class CallsScreen extends StatefulWidget {
   const CallsScreen({super.key});
@@ -11,6 +12,7 @@ class CallsScreen extends StatefulWidget {
 class _CallsScreenState extends State<CallsScreen> {
   List<Map<String, dynamic>> _calls = [];
   List<Map<String, dynamic>> _filteredCalls = [];
+  Set<int> _completedCalls = Set();
 
   @override
   void initState() {
@@ -105,6 +107,32 @@ class _CallsScreenState extends State<CallsScreen> {
     });
   }
 
+  void _startCallConsultation(Map<String, dynamic> call) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ConsultationScreen(
+        patientName: call['patientName'],
+        appointmentType: 'call',
+        recordId: call['id'],
+      ),
+    ),
+  ).then((result) {
+    if (result != null) {
+      setState(() {
+        _completedCalls.add(call['id']);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Заключение по вызову ${call['patientName']} сохранено'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  });
+}
+
    @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,11 +176,16 @@ class _CallsScreenState extends State<CallsScreen> {
   }
 
   Widget _buildCallCard(Map<String, dynamic> call) {
-    final isEmergency = call['status'] == 'ЭКСТРЕННЫЙ';
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: isEmergency ? const Color(0xFFFFEBEE).withOpacity(0.7) : Colors.white,
+  final isEmergency = call['status'] == 'ЭКСТРЕННЫЙ';
+  final isCompleted = _completedCalls.contains(call['id']);
+  
+  return Card(
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    color: isCompleted 
+        ? Colors.green[100] 
+        : isEmergency 
+          ? const Color(0xFFFFEBEE).withOpacity(0.7) 
+          : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -235,7 +268,7 @@ class _CallsScreenState extends State<CallsScreen> {
                 OutlinedButton.icon(
                   icon: Icon(Icons.check_circle_outline, size: 18, color: Theme.of(context).primaryColor),
                   label: Text('Принять', style: TextStyle(color: Theme.of(context).primaryColor)),
-                  onPressed: () {},
+                  onPressed: () => _startCallConsultation(call),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Theme.of(context).primaryColor),
                   ),
