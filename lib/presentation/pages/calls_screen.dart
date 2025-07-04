@@ -133,7 +133,7 @@ class _CallsScreenState extends State<CallsScreen> {
   });
 }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -141,29 +141,14 @@ class _CallsScreenState extends State<CallsScreen> {
         backgroundColor: const Color(0xFF8B8B8B), // Серый
         foregroundColor: Colors.white,
         actions: [
-          // Кнопка обновления справа
+          // ТОЛЬКО кнопка обновления
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshCalls,
             tooltip: 'Обновить список',
           ),
         ],
-        leading: // Кнопка добавления слева
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFFD2B48C), // Бежевый
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.add, size: 20),
-            ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddPatientScreen()),
-            ),
-            tooltip: 'Добавить пациента',
-          ),
+        // УДАЛЕН leading (кнопка добавления пациента)
       ),
       body: ListView.builder(
         itemCount: _filteredCalls.length,

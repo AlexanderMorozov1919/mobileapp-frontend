@@ -21,7 +21,6 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     try {
       await repository.register(
         fullName: event.fullName,
-        contact: event.contact,
         specialty: event.specialty,
         username: event.username,
         password: event.password,

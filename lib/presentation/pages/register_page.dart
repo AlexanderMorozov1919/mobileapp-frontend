@@ -14,7 +14,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = {
     'fullName': TextEditingController(),
-    'contact': TextEditingController(),
     'specialty': TextEditingController(),
     'username': TextEditingController(),
     'password': TextEditingController(),
@@ -53,9 +52,6 @@ class _RegisterPageState extends State<RegisterPage> {
               child: ListView(
                 children: [
                   _buildTextField('ФИО', 'fullName', icon: Icons.person),
-                  const SizedBox(height: 20),
-                  
-                  _buildTextField('Контактная информация', 'contact', icon: Icons.contact_mail),
                   const SizedBox(height: 20),
                   
                   _buildTextField('Специальность', 'specialty', icon: Icons.work),
@@ -132,7 +128,6 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_formKey.currentState!.validate()) {
       context.read<RegisterBloc>().add(RegisterRequested(
         fullName: _controllers['fullName']!.text,
-        contact: _controllers['contact']!.text,
         specialty: _controllers['specialty']!.text,
         username: _controllers['username']!.text,
         password: _controllers['password']!.text,

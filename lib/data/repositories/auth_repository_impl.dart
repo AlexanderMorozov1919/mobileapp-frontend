@@ -16,14 +16,12 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> register({
     required String fullName,
-    required String contact,
     required String specialty,
     required String username,
     required String password,
   }) async {
     await remoteDataSource.register({
       'fullName': fullName,
-      'contact': contact,
       'specialty': specialty,
       'username': username,
       'password': password,

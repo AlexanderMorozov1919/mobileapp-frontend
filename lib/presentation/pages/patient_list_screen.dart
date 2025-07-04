@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'patient_detail_screen.dart';
 import 'patient_history_screen.dart';
+import 'add_patient_screen.dart';
 
 class PatientListScreen extends StatefulWidget {
   const PatientListScreen({super.key});
@@ -184,7 +185,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Панель поиска и фильтров
+        // Панель поиска, фильтра и добавления
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -197,7 +198,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                     hintText: 'Поиск по ФИО пациента',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0), // Более круглые углы
+                      borderRadius: BorderRadius.circular(30.0),
                     ),
                     filled: true,
                     fillColor: Colors.white,
@@ -205,6 +206,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 ),
               ),
               const SizedBox(width: 10),
+              
               // Кнопка фильтра
               Container(
                 decoration: BoxDecoration(
@@ -218,6 +220,23 @@ class _PatientListScreenState extends State<PatientListScreen> {
                       const SnackBar(content: Text('Фильтрация будет реализована позже')),
                     );
                   },
+                ),
+              ),
+              const SizedBox(width: 10),
+              
+              // Кнопка добавления пациента (НОВАЯ КНОПКА)
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.add, size: 25, color: Colors.white),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddPatientScreen()),
+                  ),
+                  tooltip: 'Добавить пациента',
                 ),
               ),
             ],
