@@ -63,16 +63,14 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   }
 
   void _submitConsultation() {
-    // В реальном приложении здесь будет сохранение в БД
-    // Возвращаем результат с данными заключения
-    Navigator.pop(context, {
-      'recordId': widget.recordId,
-      'diagnosis': _diagnosisController.text,
-      'recommendations': _recommendationsController.text,
-      'services': _selectedServices,
-      'totalPrice': _totalPrice,
-    });
-  }
+  Navigator.pop(context, {
+    'recordId': widget.recordId,
+    'diagnosis': _diagnosisController.text,
+    'recommendations': _recommendationsController.text,
+    'services': _selectedServices,
+    'totalPrice': _totalPrice,
+  });
+}
 
   @override
   Widget build(BuildContext context) {

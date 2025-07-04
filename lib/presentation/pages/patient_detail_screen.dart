@@ -14,19 +14,33 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   final Map<String, TextEditingController> _controllers = {};
   
   @override
-  void initState() {
-    super.initState();
-    // Инициализируем контроллеры для редактирования
-    _controllers['fullName'] = TextEditingController(text: widget.patient['fullName']);
-    _controllers['gender'] = TextEditingController(text: widget.patient['gender'] ?? '');
-    _controllers['birthDate'] = TextEditingController(text: widget.patient['birthDate'] ?? '');
-    _controllers['snils'] = TextEditingController(text: widget.patient['snils'] ?? '');
-    _controllers['oms'] = TextEditingController(text: widget.patient['oms'] ?? '');
-    _controllers['passport'] = TextEditingController(text: widget.patient['passport'] ?? '');
-    _controllers['phone'] = TextEditingController(text: widget.patient['phone'] ?? '');
-    _controllers['email'] = TextEditingController(text: widget.patient['email'] ?? '');
-    _controllers['contraindications'] = TextEditingController(text: widget.patient['contraindications'] ?? '');
-  }
+void initState() {
+  super.initState();
+  
+  // Инициализация контроллеров данными пациента
+  _controllers['fullName'] = TextEditingController(
+      text: widget.patient['fullName'] ?? '');
+  _controllers['gender'] = TextEditingController(
+      text: widget.patient['gender'] ?? '');
+  _controllers['birthDate'] = TextEditingController(
+      text: widget.patient['birthDate'] ?? '');
+  _controllers['snils'] = TextEditingController(
+      text: widget.patient['snils'] ?? '');
+  _controllers['oms'] = TextEditingController(
+      text: widget.patient['oms'] ?? '');
+  _controllers['passport'] = TextEditingController(
+      text: widget.patient['passport'] ?? '');
+  _controllers['phone'] = TextEditingController(
+      text: widget.patient['phone'] ?? '');
+  _controllers['email'] = TextEditingController(
+      text: widget.patient['email'] ?? '');
+  _controllers['contraindications'] = TextEditingController(
+      text: widget.patient['contraindications'] ?? '');
+  
+  // Адрес теперь берем из данных пациента
+  _controllers['address'] = TextEditingController(
+      text: widget.patient['address'] ?? '');
+}
 
   @override
   void dispose() {

@@ -1,28 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:demo_app/data/models/appointment_model.dart';
 import 'package:demo_app/presentation/pages/patient_detail_screen.dart';
 import 'package:demo_app/presentation/pages/consultation_screen.dart';
-
-class Appointment {
-  final int id;
-  final String patientName;
-  final String cabinet;
-  final DateTime time;
-  AppointmentStatus status;
-
-  Appointment({
-    required this.id,
-    required this.patientName,
-    required this.cabinet,
-    required this.time,
-    this.status = AppointmentStatus.scheduled,
-  });
-}
-
-enum AppointmentStatus {
-  scheduled,
-  completed,
-  noShow,
-}
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -33,8 +14,25 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
-  late final List<DateTime> _dates;
+  late List<DateTime> _dates;
   List<Appointment> _appointments = [];
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  // Форматируем дату в строку для запроса: "гггг-мм-дд"
+  String _formatDateForRequest(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // Форматируем время: "чч:мм"
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Форматируем дату для отображения: "дд.мм.гггг"
+  String _formatDateForDisplay(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+  }
 
   @override
   void initState() {
@@ -44,27 +42,37 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _loadAppointments();
   }
 
-  void _loadAppointments() {
+  Future<void> _loadAppointments() async {
     setState(() {
-      _appointments = List.generate(8, (index) {
-        final hour = 8 + index;
-        return Appointment(
-          id: index,
-          patientName: _getRandomPatientName(index),
-          cabinet: '${201 + index % 3}',
-          time: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, hour),
-        );
-      });
+      _isLoading = true;
+      _errorMessage = '';
     });
-  }
 
-  String _getRandomPatientName(int index) {
-    final names = [
-      'Иванов И.И.', 'Петрова А.С.', 'Сидоров Д.К.', 
-      'Козлова М.П.', 'Никитин В.А.', 'Фёдорова О.И.',
-      'Григорьев П.Д.', 'Семёнова Е.В.'
-    ];
-    return names[index % names.length];
+    try {
+      final formattedDate = _formatDateForRequest(_selectedDate);
+      final response = await http.get(
+        Uri.parse('http://192.168.30.58:8080/main/2?date=$formattedDate&page=1')
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        setState(() {
+          _appointments = Appointment.fromJsonList(jsonData);
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Ошибка сервера: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Ошибка сети: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _showAppointmentOptions(BuildContext context, Appointment appointment) {
@@ -83,20 +91,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   _openPatientDetails(context, appointment);
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.medical_services),
-                title: const Text('Начать приём'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _openConsultationScreen(context, appointment);
-                },
-              ),
+              if (appointment.status == 'scheduled')
+                ListTile(
+                  leading: const Icon(Icons.medical_services),
+                  title: const Text('Начать приём'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openConsultationScreen(context, appointment);
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('Не явился'),
                 onTap: () {
                   setState(() {
-                    appointment.status = AppointmentStatus.noShow;
+                    appointment.status = 'cancelled';
                   });
                   Navigator.pop(context);
                 },
@@ -110,18 +119,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   void _openPatientDetails(BuildContext context, Appointment appointment) {
     final patient = {
-      'id': appointment.id,
-      'fullName': appointment.patientName,
-      'room': 'Палата ${101 + appointment.id % 5}',
-      'diagnosis': 'Диагноз не установлен',
-      'gender': appointment.id % 2 == 0 ? 'Мужской' : 'Женский',
-      'birthDate': '01.01.${1980 + appointment.id % 20}',
-      'snils': '123-456-789 0${appointment.id}',
-      'oms': '123456789012345${appointment.id}',
-      'passport': '45 06 12345${appointment.id}',
-      'address': 'г. Москва, ул. Примерная, д. ${10 + appointment.id}, кв. ${20 + appointment.id}',
-      'phone': '+7 (999) 123-45-${appointment.id}',
-      'email': 'patient${appointment.id}@example.com',
+      'id': appointment.patientId,
+      'fullName': 'Пациент ID: ${appointment.patientId}',
+      'room': 'Палата ${101 + appointment.patientId % 5}',
+      'diagnosis': appointment.diagnosis ?? 'Диагноз не установлен',
+      'gender': appointment.patientId % 2 == 0 ? 'Мужской' : 'Женский',
+      'birthDate': '01.01.${1980 + appointment.patientId % 20}',
+      'snils': '123-456-789 0${appointment.patientId}',
+      'oms': '123456789012345${appointment.patientId}',
+      'passport': '45 06 12345${appointment.patientId}',
+      'address': appointment.address,
+      'phone': '+7 (999) 123-45-${appointment.patientId}',
+      'email': 'patient${appointment.patientId}@example.com',
       'contraindications': 'Нет',
     };
     
@@ -138,7 +147,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ConsultationScreen(
-          patientName: appointment.patientName,
+          patientName: 'Пациент ID: ${appointment.patientId}',
           appointmentType: 'appointment',
           recordId: appointment.id,
         ),
@@ -146,7 +155,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     ).then((result) {
       if (result != null) {
         setState(() {
-          appointment.status = AppointmentStatus.completed;
+          appointment.status = 'completed';
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -165,19 +174,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     String statusText = '';
 
     switch (appointment.status) {
-      case AppointmentStatus.noShow:
+      case 'cancelled':
         cardColor = Colors.red.shade100;
         statusIcon = Icons.close;
-        iconColor = Colors.red;
+        iconColor = Colors.red.shade800;
         statusText = 'Не явился';
         break;
-      case AppointmentStatus.completed:
+      case 'completed':
         cardColor = Colors.green.shade100;
         statusIcon = Icons.check;
         iconColor = Colors.green;
         statusText = 'Приём завершён';
         break;
-      case AppointmentStatus.scheduled:
+      case 'scheduled':
       default:
         break;
     }
@@ -199,7 +208,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${appointment.time.hour}:00',
+                          _formatTime(appointment.date),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -208,7 +217,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${appointment.time.hour + 1}:00',
+                          _formatTime(appointment.date.add(const Duration(hours: 1))),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -223,7 +232,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          appointment.patientName,
+                          'Пациент ID: ${appointment.patientId}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold, 
                             fontSize: 16
@@ -231,20 +240,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Кабинет ${appointment.cabinet}',
+                          appointment.address,
                           style: const TextStyle(color: Colors.grey),
                         ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'Плановый осмотр',
-                          style: TextStyle(fontSize: 14),
-                        ),
+                        if (appointment.diagnosis != null && appointment.diagnosis!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5),
+                            child: Text(
+                              'Диагноз: ${appointment.diagnosis}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 ],
               ),
-              if (appointment.status != AppointmentStatus.scheduled)
+              if (appointment.status != 'scheduled')
                 Positioned(
                   top: 8,
                   right: 8,
@@ -346,18 +358,43 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          'Расписание на ${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
+          'Расписание на ${_formatDateForDisplay(_selectedDate)}',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _appointments.length,
-            itemBuilder: (context, index) {
-              return _buildTimeSlot(_appointments[index]);
-            },
+        
+        if (_isLoading)
+          const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_errorMessage.isNotEmpty)
+          Expanded(
+            child: Center(
+              child: Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else if (_appointments.isEmpty)
+          const Expanded(
+            child: Center(
+              child: Text(
+                'На выбранную дату приёмов не запланировано',
+                style: TextStyle(fontSize: 16),
+            ),
+          )
+          )
+        else 
+          Expanded(
+            child: ListView.builder(
+              itemCount: _appointments.length,
+              itemBuilder: (context, index) {
+                return _buildTimeSlot(_appointments[index]);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
