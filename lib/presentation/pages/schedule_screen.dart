@@ -43,37 +43,50 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Future<void> _loadAppointments() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
 
-    try {
-      final formattedDate = _formatDateForRequest(_selectedDate);
-      final response = await http.get(
-        Uri.parse('http://192.168.30.58:8080/main/2?date=$formattedDate&page=1')
-      );
+  try {
+    final formattedDate = _formatDateForRequest(_selectedDate);
+    final url = 'http://192.168.30.106:8080/main/1?date=$formattedDate&page=1';
+    
+    print("Запрос к URL: $url");
+    
+    final response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        setState(() {
-          _appointments = Appointment.fromJsonList(jsonData);
-        });
-      } else {
-        setState(() {
-          _errorMessage = 'Ошибка сервера: ${response.statusCode}';
-        });
-      }
-    } catch (e) {
+    print("Статус ответа: ${response.statusCode}");
+    print("Тело ответа: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = json.decode(response.body);
+      print("Получено ${jsonData.length} записей");
+      
       setState(() {
-        _errorMessage = 'Ошибка сети: $e';
+        _appointments = Appointment.fromJsonList(jsonData);
+        // В методе _loadAppointments после получения данных
+        print("Записи после парсинга:");
+        for (var app in _appointments) {
+          print("ID: ${app.id}, Дата: ${app.date}, Статус: ${app.status}");
+        }
       });
-    } finally {
+    } else {
       setState(() {
-        _isLoading = false;
+        _errorMessage = 'Ошибка сервера: ${response.statusCode}';
       });
     }
+  } catch (e) {
+    print("Ошибка: $e");
+    setState(() {
+      _errorMessage = 'Ошибка сети: $e';
+    });
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   void _showAppointmentOptions(BuildContext context, Appointment appointment) {
     showModalBottomSheet(
@@ -172,6 +185,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     IconData? statusIcon;
     Color? iconColor;
     String statusText = '';
+
+    print("Построение карточки для приёма ID: ${appointment.id}");
 
     switch (appointment.status) {
       case 'cancelled':

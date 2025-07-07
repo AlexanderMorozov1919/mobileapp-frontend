@@ -19,6 +19,8 @@ import 'presentation/bloc/login_bloc.dart';
 import 'presentation/bloc/register_bloc.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
   runApp(const MyApp());
 }
 
