@@ -25,6 +25,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   late DateTime _birthDate; // Добавляем для редактирования даты рождения
   Patient? _currentPatient;
   bool _isMale = true; 
+  String _docType = 'Паспорт гражданина';
 
   @override
   void initState() {
@@ -148,48 +149,41 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
   }
 
-
-void _resetControllers() {
-  _controllers.forEach((key, controller) => controller.dispose());
-  _controllers.clear();
-}
-  Widget _buildGenderField() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: _isEditing
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Пол', style: TextStyle(fontWeight: FontWeight.w500)),
-                Row(
-                  children: [
-                    Radio<bool>(
-                      value: true,
-                      groupValue: _isMale,
-                      onChanged: (value) {
-                        setState(() => _isMale = value ?? true);
-                      },
-                    ),
-                    const Text('Мужской'),
-                    const SizedBox(width: 20),
-                    Radio<bool>(
-                      value: false,
-                      groupValue: _isMale,
-                      onChanged: (value) {
-                        setState(() => _isMale = !(value ?? false));
-                      },
-                    ),
-                    const Text('Женский'),
-                  ],
-                ),
-              ],
-            )
-          : ListTile(
-              title: const Text('Пол', style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(_isMale ? 'Мужской' : 'Женский'),
-            ),
-    );
+  void _resetControllers() {
+    _controllers.forEach((key, controller) => controller.dispose());
+    _controllers.clear();
   }
+
+  Widget _buildGenderField() {
+    return _isEditing
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Пол', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              DropdownButtonFormField<String>(
+                value: _isMale ? 'Мужской' : 'Женский',
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Мужской', child: Text('Мужской')),
+                  DropdownMenuItem(value: 'Женский', child: Text('Женский')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _isMale = value == 'Мужской');
+                  }
+                },
+              ),
+            ],
+          )
+        : _buildReadOnlyField('Пол', _isMale ? 'Мужской' : 'Женский');
+  }
+
 
   @override
   void dispose() {
@@ -199,292 +193,386 @@ void _resetControllers() {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: FutureBuilder<Patient>(
+      return Scaffold(
+        appBar: AppBar(
+          title: FutureBuilder<Patient>(
+            future: _patientFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text('Медкарта: ${snapshot.data!.fullName}');
+              }
+              return const Text('Медкарта пациента');
+            },
+          ),
+          backgroundColor: const Color(0xFF5F9EA0),
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: Icon(_isEditing ? Icons.save : Icons.edit),
+              onPressed: _toggleEditMode,
+              tooltip: _isEditing ? 'Сохранить изменения' : 'Редактировать',
+            ),
+          ],
+        ),
+        body: FutureBuilder<Patient>(
           future: _patientFuture,
           builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Text('Медкарта: ${snapshot.data!.fullName}');
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
             }
-            return const Text('Медкарта пациента');
+            
+            if (snapshot.hasError) {
+              return Center(child: Text('Ошибка: ${snapshot.error}'));
+            }
+            
+            if (!snapshot.hasData) {
+              return const Center(child: Text('Данные пациента не найдены'));
+            }
+            
+            final patient = snapshot.data!;
+            _currentPatient = patient;
+
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    // Фамилия и Имя
+                    Row(
+                      children: [
+                        Expanded(child: _buildNameField('Фамилия', 'lastName', patient.lastName, true)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildNameField('Имя', 'firstName', patient.firstName, true)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Отчество и Дата рождения
+                    Row(
+                      children: [
+                        Expanded(child: _buildNameField('Отчество', 'middleName', patient.middleName, false)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildBirthDateField(patient)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Телефон и СНИЛС
+                    Row(
+                      children: [
+                        Expanded(child: _buildContactField('Телефон', 'phone', patient.phone, true, TextInputType.phone)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildDocumentField('СНИЛС', 'snils', _formatSnils(patient.snils), true, [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                          _SnilsFormatter(),
+                        ])),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Тип документа и Пол
+                    Row(
+                      children: [
+                        Expanded(child: _buildDocTypeField()),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildGenderField()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Серия и Номер документа
+                    Row(
+                      children: [
+                        Expanded(child: _buildDocumentField('Серия', 'passportSeries', patient.passportSeries, true, [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                        ])),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildDocumentField('Номер', 'passportNumber', patient.passportNumber, true, [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(6),
+                        ])),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Адрес и Полис
+                    Row(
+                      children: [
+                        Expanded(child: _buildContactField('Адрес', 'address', patient.address, true, null, maxLines: 1)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildDocumentField('Полис ОМС', 'oms', _formatOms(patient.oms), true, [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(16),
+                          _OmsFormatter(),
+                        ])),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email
+                    _buildContactField('Email', 'email', patient.email, false, TextInputType.emailAddress),
+                    const SizedBox(height: 16),
+
+                    // Аллергии
+                    _buildContactField('Аллергии', 'contraindications', patient.allergies.join(', '), false, null, maxLines: 3),
+                    const SizedBox(height: 24),
+
+                    // Кнопки (только в режиме редактирования)
+                    // if (_isEditing) _buildActionButtons(),
+                  ],
+                ),
+              ),
+            );
           },
         ),
-        backgroundColor: const Color(0xFF8B8B8B),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit),
-            onPressed: _toggleEditMode,
-            tooltip: _isEditing ? 'Сохранить изменения' : 'Редактировать',
-          ),
-        ],
-      ),
-      body: FutureBuilder<Patient>(
-        future: _patientFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (snapshot.hasError) {
-            return Center(child: Text('Ошибка: ${snapshot.error}'));
-          }
-          
-          final patient = snapshot.data!;
+      );
+    }
+  
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  SectionHeader(title: 'Основная информация'),
-
-                  _isEditing
-                    ? Column(
-                        children: [
-                          _buildField(
-                            label: 'Фамилия',
-                            valueKey: 'lastName',
-                            displayValue: patient.lastName,
-                            validator: (value) =>
-                                value == null || value.isEmpty ? 'Введите фамилию' : null,
-                            isRequired: true,
-                          ),
-                          _buildField(
-                            label: 'Имя',
-                            valueKey: 'firstName',
-                            displayValue: patient.firstName,
-                            validator: (value) =>
-                                value == null || value.isEmpty ? 'Введите имя' : null,
-                            isRequired: true,
-                          ),
-                          _buildField(
-                            label: 'Отчество',
-                            valueKey: 'middleName',
-                            displayValue: patient.middleName,
-                            validator: (value) => null,
-                          ),
-                        ],
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: ListTile(
-                          title: const Text('ФИО', style: TextStyle(fontWeight: FontWeight.w500)),
-                          subtitle: Text(
-                            '${patient.lastName} ${patient.firstName} ${patient.middleName}'.trim(),
-                          ),
-                        ),
-                      ),
-
-                  _buildGenderField(),
-
-                  _buildBirthDateField(patient),
-
-                  SectionHeader(title: 'Документы'),
-
-                  _buildField(
-                    label: 'СНИЛС',
-                    valueKey: 'snils',
-                    displayValue: _formatSnils(patient.snils),
-                    maxLength: 14,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите номер СНИЛСа';
-                      }
-                      return null;
-                    },
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(11),
-                      _SnilsFormatter(),
-                    ],
-                  ),
-
-                  _buildField(
-                    label: 'Полис ОМС',
-                    valueKey: 'oms',
-                    displayValue: _formatOms(patient.oms),
-                    maxLength: 19,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите номер полиса ОМС';
-                      }
-                      return null;
-                    },
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(16),
-                      _OmsFormatter(),
-                    ],
-                  ),
-
-                  _buildPassportFields(patient),
-
-                  SectionHeader(title: 'Контактная информация'),
-
-                  _buildField(
-                    label: 'Телефон',
-                    valueKey: 'phone',
-                    displayValue: patient.phone,
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите номер телефона';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  _buildField(
-                    label: 'Email',
-                    valueKey: 'email',
-                    displayValue: patient.email,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите email';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  _buildField(
-                    label: 'Адрес',
-                    valueKey: 'address',
-                    displayValue: patient.address,
-                    maxLines: 2,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите адрес';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SectionHeader(title: 'Медицинская информация'),
-
-                  _buildField(
-                    label: 'Аллергии и противопоказания',
-                    valueKey: 'contraindications',
-                    displayValue: patient.allergies.join(', '),
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите ФИО пациента';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+  Widget _buildNameField(String label, String key, String value, bool isRequired) {
+    return _isEditing
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              CustomFormField(
+                label: label,
+                controller: _controllers[key]!,
+                isRequired: isRequired,
+                showLabelInside: false,  // Отключаем встроенный label
               ),
-            ),
-          );
-        },
+            ],
+          )
+        : _buildReadOnlyField(label, value);
+  }
+
+
+  Widget _buildContactField(String label, String key, String value, bool isRequired, TextInputType? keyboardType, {int maxLines = 1}) {
+      return _isEditing
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                CustomFormField(
+                  label: label,
+                  controller: _controllers[key]!,
+                  isRequired: isRequired,
+                  keyboardType: keyboardType,
+                  maxLines: maxLines,
+                  showLabelInside: false,
+                  inputFormatters: label == 'Телефон'
+                  ? [
+                      // Авто-подстановка "+"
+                      TextInputFormatter.withFunction((oldValue, newValue) {
+                        String text = newValue.text;
+
+                        // Если пользователь стёр + или ввёл без него — добавляем обратно
+                        if (!text.startsWith('+')) {
+                          text = '+' + text.replaceAll('+', '');
+                        }
+
+                        // Ограничение длины до 15 символов
+                        if (text.length > 15) {
+                          text = text.substring(0, 15);
+                        }
+
+                        return TextEditingValue(
+                          text: text,
+                          selection: TextSelection.collapsed(offset: text.length),
+                        );
+                      }),
+                      FilteringTextInputFormatter.allow(RegExp(r'^\+?\d*')),
+                      LengthLimitingTextInputFormatter(15),
+                    ]
+                  : null,
+                ),
+              ],
+            )
+          : _buildReadOnlyField(label, value, maxLines: maxLines);
+    }
+
+
+  Widget _buildDocumentField(String label, String key, String value, bool isRequired, List<TextInputFormatter>? formatters) {
+    return _isEditing
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              CustomFormField(
+                label: label,
+                controller: _controllers[key]!,
+                isRequired: isRequired,
+                inputFormatters: formatters,
+                showLabelInside: false,
+              ),
+            ],
+          )
+        : _buildReadOnlyField(label, value);
+  }
+
+  Widget _buildReadOnlyField(String label, String value, {int maxLines = 1}) {
+    return SizedBox(
+      width: double.infinity, // ⬅️ теперь тянется на всю ширину
+      child: Card(
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value.isEmpty ? 'Не указано' : value,
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-  
-  Widget _buildField({
-    required String label,
-    required String valueKey,
-    required String displayValue,
-    required String? Function(dynamic) validator,
-    bool isRequired = false,
-    int? maxLength,
-    int? maxLines,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: _isEditing
-          ? CustomFormField(
-              label: label,
-              controller: _controllers[valueKey]!,
-              isRequired: isRequired,
-              maxLines: maxLines,
-              maxLength: maxLength,
-              keyboardType: keyboardType,
-              inputFormatters: inputFormatters,
-              validator: validator,
-            )
-          : ListTile(
-              title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(displayValue.isEmpty ? 'Не указано' : displayValue),
-            ),
+
+
+
+  Widget _buildDocTypeField() {
+    return _isEditing
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Тип документа', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              DropdownButtonFormField<String>(
+                value: _docType,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Паспорт гражданина', child: Text('Паспорт гражданина')),
+                  DropdownMenuItem(value: 'Свидетельство о рождении', child: Text('Свидетельство о рождении')),
+                  DropdownMenuItem(value: 'Заграничный паспорт', child: Text('Заграничный паспорт')),
+                ],
+                onChanged: (value) => setState(() => _docType = value!),
+              ),
+            ],
+          )
+        : _buildReadOnlyField('Тип документа', _docType);
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton(
+          onPressed: () => setState(() => _isEditing = false),
+          child: const Text('Отмена', style: TextStyle(color: Colors.red)),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: _saveChanges,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8B8B8B),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+          child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 
   Widget _buildBirthDateField(Patient patient) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: _isEditing
-          ? Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Дата рождения',
-                      border: OutlineInputBorder(),
+    return _isEditing
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Дата рождения', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                      ),
+                      child: Text(DateFormat('dd.MM.yyyy').format(_birthDate)),
                     ),
-                    controller: TextEditingController(
-                      text: DateFormat('dd.MM.yyyy').format(_birthDate),
-                    ),
-                    readOnly: true,
                   ),
-                ),
-                DatePickerIconButton(
-                  initialDate: _birthDate,
-                  onDateSelected: (date) => setState(() => _birthDate = date),
-                  showDateText: false,
-                ),
-              ],
-            )
-          : ListTile(
-              title: Text('Дата рождения', 
-                         style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(patient.formattedBirthDate),
-            ),
-    );
+                  DatePickerIconButton(
+                    initialDate: _birthDate,
+                    onDateSelected: (date) => setState(() => _birthDate = date),
+                  ),
+                ],
+              ),
+            ],
+          )
+        : _buildReadOnlyField('Дата рождения', patient.formattedBirthDate);
   }
+
   
   // Виджет для полей паспорта
   Widget _buildPassportFields(Patient patient) {
     return _isEditing
         ? Column(
             children: [
-              CustomFormField(
-                label: 'Серия паспорта',
-                controller: _controllers['passportSeries']!,
-                maxLength: 4,
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Введите серию паспорта';
-                  }
-                  return null;
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Серия паспорта', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  CustomFormField(
+                    label: 'Серия паспорта',
+                    controller: _controllers['passportSeries']!,
+                    maxLength: 4,
+                    keyboardType: TextInputType.number,
+                    showLabelInside: false,
+                    isRequired: true,
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
-              CustomFormField(
-                label: 'Номер паспорта',
-                controller: _controllers['passportNumber']!,
-                maxLength: 6,
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Введите номер паспорта';
-                  }
-                  return null;
-                },
+              const SizedBox(height: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Номер паспорта', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  CustomFormField(
+                    label: 'Номер паспорта',
+                    controller: _controllers['passportNumber']!,
+                    maxLength: 6,
+                    keyboardType: TextInputType.number,
+                    showLabelInside: false,
+                    isRequired: true,
+                  ),
+                ],
               ),
             ],
           )
         : ListTile(
-            title: Text('Паспорт', 
-                       style: TextStyle(fontWeight: FontWeight.w500)),
+            title: const Text('Паспорт', style: TextStyle(fontWeight: FontWeight.w500)),
             subtitle: Text(
               patient.passportSeries.isNotEmpty && patient.passportNumber.isNotEmpty
                   ? '${patient.passportSeries} ${patient.passportNumber}'
@@ -492,6 +580,7 @@ void _resetControllers() {
             ),
           );
   }
+
 
   void _toggleEditMode() {
     if (_isEditing) {

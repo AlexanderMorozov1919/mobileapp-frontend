@@ -28,10 +28,7 @@ import 'services/api_client.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  SharedPreferences? prefs;
-  if (kIsWeb) {
-    prefs = await SharedPreferences.getInstance();
-  }
+  final prefs = await SharedPreferences.getInstance();
 
   final authService = AuthService(prefs);
   final apiClient = ApiClient(authService);
@@ -41,17 +38,20 @@ void main() async {
   runApp(MyApp(
     apiClient: apiClient,
     authRepository: authRepository,
+    authService: authService
   ));
 }
 
 class MyApp extends StatelessWidget {
   final ApiClient apiClient;
   final AuthRepository authRepository;
-  
+  final AuthService authService;
+
   const MyApp({
     super.key,
     required this.apiClient,
     required this.authRepository,
+    required this.authService,
   });
 
   @override
@@ -59,6 +59,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         Provider.value(value: apiClient),
+        Provider.value(value: this.authService),
         BlocProvider(
           create: (context) => LoginBloc(
             loginUseCase: LoginUseCase(authRepository),
@@ -77,28 +78,28 @@ class MyApp extends StatelessWidget {
           Locale('ru', 'RU'),
         ],
         theme: ThemeData(
-          primaryColor: const Color(0xFF8B8B8B),
+          primaryColor: const Color(0xFF5F9EA0), // Основной цвет (для кнопок и акцентов)
+          scaffoldBackgroundColor: const Color(0xFFFFF0F5), // Фон всего приложения
           colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: const MaterialColor(0xFF8B8B8B, {
-              50: Color(0xFFF2F2F2),
-              100: Color(0xFFE6E6E6),
-              200: Color(0xFFD1D1D1),
-              300: Color(0xFFBCBCBC),
-              400: Color(0xFFA3A3A3),
-              500: Color(0xFF8B8B8B),
-              600: Color(0xFF737373),
-              700: Color(0xFF5C5C5C),
-              800: Color(0xFF454545),
-              900: Color(0xFF2E2E2E),
+            primarySwatch: const MaterialColor(0xFF5F9EA0, {
+              50: Color(0xFFE0F2F1),
+              100: Color(0xFFB2DFDB),
+              200: Color(0xFF80CBC4),
+              300: Color(0xFF4DB6AC),
+              400: Color(0xFF26A69A),
+              500: Color(0xFF5F9EA0), // кнопки
+              600: Color(0xFF00897B),
+              700: Color(0xFF00796B),
+              800: Color(0xFF00695C),
+              900: Color(0xFF004D40),
             }),
-            accentColor: const Color(0xFFD2B48C),
-            backgroundColor: const Color(0xFFF5F5F5),
+            accentColor: const Color(0xFF4682B4), // Нижнее меню, выделенная дата
+            backgroundColor: const Color(0xFFFFF0F5),
           ),
-          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
           appBarTheme: const AppBarTheme(
             centerTitle: true,
             elevation: 1,
-            backgroundColor: Color(0xFF8B8B8B),
+            backgroundColor: Color(0xFF5F9EA0), // Верхняя панель
             titleTextStyle: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -114,8 +115,8 @@ class MyApp extends StatelessWidget {
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0xFF8B8B8B),
+              foregroundColor: Colors.white, // Текст на кнопках
+              backgroundColor: const Color(0xFF5F9EA0), // Цвет кнопок
               textStyle: const TextStyle(fontSize: 18),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -125,12 +126,12 @@ class MyApp extends StatelessWidget {
           ),
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF8B8B8B),
+              foregroundColor: const Color(0xFF5F9EA0),
             ),
           ),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
-            backgroundColor: const Color(0xFF8B8B8B),
-            selectedItemColor: const Color(0xFFD2B48C),
+            backgroundColor: const Color(0xFF4682B4), // Нижнее меню
+            selectedItemColor: Colors.white, // Выбранный элемент меню
             unselectedItemColor: Colors.white70,
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
@@ -145,7 +146,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: FutureBuilder<String?>(
-          future: apiClient.getToken(),
+          future: authService.getToken(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(

@@ -282,8 +282,8 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       StatusChip(
-                        text: widget.call['status'],
-                        isEmergency: widget.call['status'] == 'ЭКСТРЕННЫЙ',
+                        text: widget.call['mainStatus'],
+                        isEmergency: widget.call['mainStatus'] == 'ЭКСТРЕННЫЙ',
                       ),
                       Text(
                         widget.call['time'],
@@ -516,6 +516,14 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
                 _startConsultation(patient);
               },
             ),
+            if (patient['hasConclusion'])
+          TextButton(
+            child: const Text('Редактировать заключение'),
+            onPressed: () {
+              Navigator.pop(context);
+              _startConsultation(patient);
+            },
+          ),
           TextButton(
             child: const Text('Закрыть'),
             onPressed: () => Navigator.pop(context),

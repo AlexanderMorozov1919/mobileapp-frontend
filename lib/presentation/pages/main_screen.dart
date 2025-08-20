@@ -36,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
+              color: const Color(0xFF4682B4).withOpacity(0.3),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, -2),
@@ -62,12 +62,12 @@ class _MainScreenState extends State<MainScreen> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.local_hospital_outlined),
                 activeIcon: Icon(Icons.local_hospital, size: 28),
-                label: 'Вызовы',
+                label: 'СМП',
               ),
             ],
-            selectedItemColor: const Color(0xFFD2B48C), // Бежевый
+            selectedItemColor: const Color(0xFFD2B48C),
             unselectedItemColor: Colors.white70,
-            backgroundColor: const Color(0xFF8B8B8B), // Серый
+            backgroundColor: const Color(0xFF4682B4), 
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
             selectedLabelStyle: const TextStyle(

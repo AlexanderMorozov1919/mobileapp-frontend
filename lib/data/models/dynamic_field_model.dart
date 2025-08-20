@@ -51,9 +51,26 @@ class DynamicField {
       maxItems: json['max_items'] as int?,
       example: json['example'],
       defaultValue: json['default_value'],
-      value: json['value'],
+      value: json['value'] ?? _getDefaultForType(json['type'] as String),
       keyFormat: json['key_format'] as String?,
       valueFormat: json['value_format'] as String?,
     );
+  }
+
+  static dynamic _getDefaultForType(String type) {
+    switch (type) {
+      case 'string':
+        return '';
+      case 'int':
+        return 0;
+      case 'boolean':
+        return false;
+      case 'array':
+        return [];
+      case 'object':
+        return {};
+      default:
+        return '';
+    }
   }
 }

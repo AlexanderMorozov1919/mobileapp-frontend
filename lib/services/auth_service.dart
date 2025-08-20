@@ -5,108 +5,99 @@ import 'package:universal_html/html.dart' as html;
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
-  static const String _doctorIdKey = 'doctor_id'; // Ключ для ID доктора
-  
+  static const String _doctorIdKey = 'doctor_id';
+
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  final SharedPreferences? _prefs;
+  final SharedPreferences _prefs;
 
   AuthService(this._prefs);
 
-  // Сохраняем токен в зависимости от платформы
+  /// Сохраняем токен
   Future<void> saveToken(String token) async {
     if (kIsWeb) {
-      // Для web используем cookies
-      final expiration = DateTime.now().add(const Duration(days: 30));
-      final cookie = "token=$token; expires=${expiration.toUtc().toIso8601String()}; path=/";
-      html.document.cookie = cookie;
-      
-      // Дополнительно сохраняем в SharedPreferences
-      if (_prefs != null) {
-        await _prefs.setString(_tokenKey, token);
-      }
+      _setCookie('token', token);
+      await _prefs.setString(_tokenKey, token);
     } else {
-      // Для мобильных платформ используем Secure Storage
       await _secureStorage.write(key: _tokenKey, value: token);
     }
   }
 
+  /// Сохраняем doctorId
   Future<void> saveDoctorId(String doctorId) async {
     if (kIsWeb) {
-      final expiration = DateTime.now().add(const Duration(days: 30));
-      final cookie = "doctor_id=$doctorId; expires=${expiration.toUtc().toIso8601String()}; path=/";
-      html.document.cookie = cookie;
-      
-      if (_prefs != null) {
-        await _prefs?.setString(_doctorIdKey, doctorId);
-      }
+      _setCookie('doctor_id', doctorId);
+      await _prefs.setString(_doctorIdKey, doctorId);
     } else {
       await _secureStorage.write(key: _doctorIdKey, value: doctorId);
     }
   }
 
-  // Получаем токен
+  /// Получаем токен
   Future<String?> getToken() async {
     if (kIsWeb) {
-      // Логика для web
-      final cookies = html.document.cookie?.split(';') ?? [];
-      for (final cookie in cookies) {
-        final parts = cookie.split('=');
-        if (parts.length == 2 && parts[0].trim() == 'token') {
-          return parts[1].trim();
-        }
-      }
-      return _prefs?.getString(_tokenKey);
+      return _getCookie('token') ?? _prefs.getString(_tokenKey);
     } else {
-      // Логика для мобильных платформ
       return await _secureStorage.read(key: _tokenKey);
     }
   }
 
+  /// Получаем doctorId
   Future<String?> getDoctorId() async {
     if (kIsWeb) {
-      final cookies = html.document.cookie?.split(';') ?? [];
-      for (final cookie in cookies) {
-        final parts = cookie.split('=');
-        if (parts.length == 2 && parts[0].trim() == 'doctor_id') {
-          return parts[1].trim();
-        }
-      }
-      return _prefs?.getString(_doctorIdKey);
+      return _getCookie('doctor_id') ?? _prefs.getString(_doctorIdKey);
     } else {
       return await _secureStorage.read(key: _doctorIdKey);
     }
   }
 
-  Future<void> clearAll() async {
-    await deleteToken();
-    await deleteDoctorId();
+  /// Удаляем токен
+  Future<void> deleteToken() async {
+    if (kIsWeb) {
+      _deleteCookie('token');
+      await _prefs.remove(_tokenKey);
+    } else {
+      await _secureStorage.delete(key: _tokenKey);
+    }
   }
 
-  // Удаление ID доктора
+  /// Удаляем doctorId
   Future<void> deleteDoctorId() async {
     if (kIsWeb) {
-      html.document.cookie = "doctor_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      if (_prefs != null) {
-        await _prefs?.remove(_doctorIdKey);
-      }
+      _deleteCookie('doctor_id');
+      await _prefs.remove(_doctorIdKey);
     } else {
       await _secureStorage.delete(key: _doctorIdKey);
     }
   }
 
-  // Удаляем токен при выходе
-  Future<void> deleteToken() async {
-    if (kIsWeb) {
-      // Удаляем cookie
-      html.document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // Удаляем из SharedPreferences
-      if (_prefs != null) {
-        await _prefs.remove(_tokenKey);
+  /// Полный выход
+  Future<void> clearAll() async {
+    await deleteToken();
+    await deleteDoctorId();
+  }
+
+  // ===== Вспомогательные методы для работы с cookie на Web =====
+
+  void _setCookie(String key, String value) {
+    final expiration = DateTime.now().add(const Duration(days: 30));
+    final cookie =
+        "$key=$value; expires=${expiration.toUtc().toIso8601String()}; path=/";
+    html.document.cookie = cookie;
+  }
+
+  String? _getCookie(String key) {
+    final cookies = html.document.cookie?.split(';') ?? [];
+    for (final cookie in cookies) {
+      final parts = cookie.split('=');
+      if (parts.length == 2 && parts[0].trim() == key) {
+        return parts[1].trim();
       }
-    } else {
-      // Для мобильных платформ
-      await _secureStorage.delete(key: _tokenKey);
     }
+    return null;
+  }
+
+  void _deleteCookie(String key) {
+    html.document.cookie =
+        "$key=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   }
 }

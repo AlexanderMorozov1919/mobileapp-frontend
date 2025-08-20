@@ -16,7 +16,8 @@ class ApiClient {
 
   // final String baseUrl = 'http://192.168.29.112:65321/api/v1'; // новая 
   final String baseUrl = 'https://devapp2.kvant-cloud.ru/api/v1'; // новая с сертификатом
-  // final String baseUrl = 'http://192.168.30.153:8080/api/v1'; // старая url 
+  // final String baseUrl = 'http://192.168.30.139:8080/api/v1'; // localhost
+  
 
   ApiClient(this._authService) {
     _dio = Dio(
@@ -143,7 +144,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> loginDoctor(Map<String, dynamic> credentials) async {
     try {
-      final response = await _dio.post('/auth', data: credentials);
+      final response = await _dio.post('/auth/', data: credentials);
       print('Auth URL: ${response.realUri}');
       if (response.statusCode == 200) {
         // Сохраняем токен

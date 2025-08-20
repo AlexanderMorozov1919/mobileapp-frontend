@@ -32,8 +32,55 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _documentType;
+  String? _documentTypeKey;
   List<Map<String, dynamic>> _medServices = [];
   final _formKey = GlobalKey<FormState>();
+  static const Map<String, List<String>> mainFieldsMap = {
+    'traumatologist_data': [
+      'injury_type',
+      'localization',
+      'fracture',
+      'dislocation',
+      'sprain',
+      'contusion',
+      'treatment_plan',
+    ],
+    'neurologist_data': [
+      'diagnosis',
+      'complaints',
+      'recommendations',
+      'sensitivity',
+      'gait',
+      'speech',
+    ],
+    'urologist_data': [
+      'complaints',
+      'diagnosis',
+      'treatment',
+    ],
+    'allergologist_data': [
+      'complaints',
+      'allergen_history',
+      // 'ige_level',
+      // 'immunotherapy',
+      'diagnosis',
+      'recommendations',
+    ],
+    'psychiatrist_data': [
+      'mental_status',
+      'mood',
+      'thought_process',
+      'diagnosis_icd',
+      'therapy_plan',
+    ],
+    'proctologist_data': [
+      'complaints',
+      'digital_examination',
+      'hemorrhoids',
+      'diagnosis',
+      'recommendations',
+    ],
+  };
 
   @override
   void initState() {
@@ -47,6 +94,13 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         const SnackBar(content: Text('Пожалуйста, заполните все обязательные поля')),
       );
       return;
+    }
+    if ((_formValues['diagnosis'] == null || (_formValues['diagnosis'] as String).trim().isEmpty) ||
+      (_formValues['recommendations'] == null || (_formValues['recommendations'] as String).trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Диагноз и рекомендации должны быть заполнены')),
+        );
+        return;
     }
 
     try {
@@ -124,13 +178,14 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         final doctor = data['doctor'] as Map<String, dynamic>? ?? {};
         _documentType = doctor['specialization'] as String? ?? data['specialization'] as String?;
         final specData = data['specialization_data'] as Map<String, dynamic>? ?? {};
+        _documentTypeKey = specData['document_type'] as String? ?? 'unknown';
         final fields = specData['fields'] as List<dynamic>? ?? [];
         _fields = fields.map((f) => DynamicField.fromJson(f as Map<String, dynamic>)).toList();
         _medServices = medServicesList;
 
         // Инициализируем значения формыё
         for (var field in _fields) {
-          _formValues[field.name] = field.value ?? field.defaultValue ?? _getDefaultForType(field.type);
+            _formValues[field.name] = field.value ?? field.defaultValue ?? _getDefaultForType(field.type);
         }
 
         _isLoading = false;
@@ -166,6 +221,27 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               : _buildDynamicForm(),
     );
   }
+
+  Map<String, List<DynamicField>> splitFields(List<DynamicField> fields, String? documentType) {
+    final mainFieldNames = mainFieldsMap[documentType] ?? [];
+
+    final mainFields = <DynamicField>[];
+    final additionalFields = <DynamicField>[];
+
+    for (var field in fields) {
+      if (mainFieldNames.contains(field.name)) {
+        mainFields.add(field);
+      } else {
+        additionalFields.add(field);
+      }
+    }
+
+    return {
+      'main': mainFields,
+      'additional': additionalFields,
+    };
+  }
+
 
   Widget _buildMedServicesSection() {
     if (_medServices.isEmpty) {
@@ -266,37 +342,61 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   }
 
   Widget _buildDynamicForm() {
+    final split = splitFields(_fields, _documentTypeKey);
+    final mainFields = split['main']!;
+    final additionalFields = split['additional']!;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Form(
-        key: _formKey,
-        child: ListView(
+        key: _formKey,  // Вот тут обязательно передай ключ
+        child: Column(
           children: [
             Text(
               'Специализация: ${_documentType ?? 'Неизвестно'}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Левая колонка - основные поля
+                  Expanded(
+                    child: ListView(
+                      children: mainFields.map((field) => _buildField(field)).toList(),
+                    ),
+                  ),
 
-            // Динамические поля
-            ..._fields.map((field) => _buildField(field)).toList(),
+                  const SizedBox(width: 20),
 
-            // Медицинские услуги
+                  // Правая колонка - дополнительные поля
+                  Expanded(
+                    child: ListView(
+                      children: additionalFields.map((field) => _buildField(field)).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             _buildMedServicesSection(),
-
-            // Кнопка сохранения
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
+            
+            // Кнопка по центру снизу
             if (!widget.isReadOnly)
-              ElevatedButton(
-                onPressed: _completeConsultation,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'Завершить консультацию',
-                  style: TextStyle(fontSize: 18),
+              SizedBox(
+                width: 250, // фиксированная ширина кнопки
+                child: ElevatedButton(
+                  onPressed: _completeConsultation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Завершить консультацию',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
           ],
@@ -305,13 +405,18 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
     );
   }
 
+
+
+
   Widget _buildField(DynamicField field) {
     // print('isReadOnly: ${widget.isReadOnly}');
     // print('Field.Name: ${field.name} Field.Type ${field.type}');
     switch (field.type) {
       case 'string':
+      case 'text':
         return _buildTextField(field);
       case 'int':
+      case 'number':
         return _buildNumberField(field);
       case 'boolean':
         return _buildBooleanField(field);
@@ -367,7 +472,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
 
 
   Widget _buildTextField(DynamicField field) {
-    final value = _formValues[field.name]?.toString() ?? '';
+    final value = (_formValues[field.name] ?? _getDefaultForType(field.type)).toString();
     // Режим только для чтения - всегда используем текстовое представление
     if (widget.isReadOnly) {
       return Padding(
@@ -540,7 +645,8 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
 
 
   Widget _buildArrayField(DynamicField field) {
-    final items = List<String>.from(_formValues[field.name] ?? []);
+    final rawItems = _formValues[field.name] ?? [];
+    final items = (rawItems is List) ? rawItems : [];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -563,12 +669,20 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               final index = entry.key;
               final item = entry.value;
 
+              String displayText;
+              if (item is Map) {
+                // превращаем объект в строку типа "allergen: пыльца, reaction: +"
+                displayText = item.entries.map((e) => "${e.key}: ${e.value}").join(", ");
+              } else {
+                displayText = item.toString();
+              }
+
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: Text('• $item')),
+                    Expanded(child: Text('• $displayText')),
                     if (!widget.isReadOnly)
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
@@ -585,7 +699,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
             }).toList(),
 
           const SizedBox(height: 10),
-          if (!widget.isReadOnly) _buildArrayItemAdder(field, items),
+          if (!widget.isReadOnly) _buildArrayItemAdder(field, items.cast<String>()),
         ],
       ),
     );
@@ -765,11 +879,24 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
 
         // Формируем данные для отправки
         final specializationData = {
-          'document_type': _documentType,
+          'document_type': _documentTypeKey,
           'fields': _fields.map((field) {
             return {
               'name': field.name,
+              'type': field.type,
+              'description': field.description,
+              'format': field.format,
+              'min_length': field.minLength,
+              'max_length': field.maxLength,
+              'min_value': field.minValue,
+              'max_value': field.maxValue,
+              'min_items': field.minItems,
+              'max_items': field.maxItems,
+              'example': field.example,
+              'default_value': field.defaultValue,
               'value': _formValues[field.name],
+              'key_format': field.keyFormat,
+              'value_format': field.valueFormat,
             };
           }).toList(),
         };

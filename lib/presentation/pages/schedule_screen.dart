@@ -1,3 +1,4 @@
+import 'package:demo_app/presentation/pages/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:demo_app/services/api_client.dart'; // Добавлен импорт
@@ -337,56 +338,68 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AppBar(
-          title: const Text(
-            'Расписание приёмов',
-            style: TextStyle(color: Color(0xFF8B8B8B)),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF),
+        title: const Text(
+          'Расписание приёмов',
+          style: TextStyle(color: Color(0xFF8B8B8B)),
+        ),
+        leading: IconButton( // ← Кнопка выхода слева
+        icon: const Icon(Icons.logout, color: Color(0xFF8B8B8B)),
+        tooltip: 'Выйти',
+        onPressed: () {
+          // Чистим данные и выходим
+          Provider.of<ApiClient>(context, listen: false).logout();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        },
+      ),
+        actions: [
+          DatePickerIconButton(
+            initialDate: _selectedDate,
+            onDateSelected: _handleDateSelected,
+            tooltip: 'Выбрать дату расписания',
           ),
-          backgroundColor: const Color(0xFFFFFFFF),
-          actions: [
-            DatePickerIconButton(
-              initialDate: _selectedDate,
-              onDateSelected: _handleDateSelected,
-              tooltip: 'Выбрать дату расписания',
-            ),
-          ],
-        ),
-        
-        DateCarousel(
-          initialDate: _selectedDate,
-          onDateSelected: (date) {
-            setState(() => _selectedDate = date);
-            _loadAppointments();
-          },
-          daysRange: 30,
-        ),
-        
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Text(
-            'Расписание на ${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+        ],
+      ),
+      body: Column(
+        children: [
+          DateCarousel(
+            initialDate: _selectedDate,
+            onDateSelected: (date) {
+              setState(() => _selectedDate = date);
+              _loadAppointments();
+            },
+            daysRange: 30,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text(
+              'Расписание на ${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        
-        Expanded(
-          child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-              ? Center(child: Text('Ошибка: $_errorMessage'))
-              : ResponsiveCardList(
-                  type: CardListType.schedule,
-                  items: _appointments,
-                  onItemTap: (context, item) => _showAppointmentOptions(item),
-                  onRefresh: _refreshAppointments,
-                ),
-        ),
-      ],
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(child: Text('Ошибка: $_errorMessage'))
+                    : ResponsiveCardList(
+                        type: CardListType.schedule,
+                        items: _appointments,
+                        onItemTap: (context, item) => _showAppointmentOptions(item),
+                        onRefresh: _refreshAppointments,
+                      ),
+          ),
+        ],
+      ),
     );
   }
+
 }

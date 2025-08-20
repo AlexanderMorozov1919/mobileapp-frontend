@@ -133,10 +133,10 @@ class _DateCarouselState extends State<DateCarousel> {
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isSelected 
-                  ? Theme.of(context).primaryColor 
+                  ? const Color(0xFF4682B4)
                   : isToday
-                    ? const Color(0xFFD2B48C).withOpacity(0.3)
-                    : const Color(0xFFE0E0E0),
+                    ? const Color(0xFFB0C4DE).withOpacity(0.3)
+                    : const Color(0xFFB0C4DE),
                 shape: BoxShape.circle,
                 border: isToday
                   ? Border.all(color: const Color(0xFFD2B48C), width: 2)

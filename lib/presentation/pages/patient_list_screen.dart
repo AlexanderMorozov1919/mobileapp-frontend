@@ -1,3 +1,4 @@
+import 'package:demo_app/presentation/pages/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:demo_app/services/api_client.dart'; // Добавлен импорт
@@ -195,6 +196,18 @@ String _buildFullName(Map<String, dynamic> patient) {
           ), // упрощенный заголовок
         backgroundColor: const Color(0xFFFFFFFF),
         toolbarHeight: 60, // уменьшенная высота
+        leading: IconButton( // ← Кнопка выхода слева
+        icon: const Icon(Icons.logout, color: Color(0xFF8B8B8B)),
+        tooltip: 'Выйти',
+        onPressed: () {
+          // Чистим данные и выходим
+          Provider.of<ApiClient>(context, listen: false).logout();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        },
+      ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF8B8B8B)), // Серый цвет

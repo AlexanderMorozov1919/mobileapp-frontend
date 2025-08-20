@@ -98,7 +98,7 @@ class _PatientHistoryScreenState extends State<PatientHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('История посещений: ${widget.patientName}'),
-        backgroundColor: const Color(0xFF8B8B8B),
+        backgroundColor: const Color(0xFF5F9EA0),
         foregroundColor: Colors.white,
       ),
       body: _isLoading

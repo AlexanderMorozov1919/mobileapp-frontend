@@ -52,7 +52,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               CustomFormField(
                 label: 'Фамилия*',
                 controller: _lastNameController,
-                validator: (value) => (value == null || value.isEmpty) ? 'Введите фамилию' : null,
+                isRequired: true,
               ),
               const SizedBox(height: 20),
 
@@ -60,7 +60,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               CustomFormField(
                 label: 'Имя*',
                 controller: _firstNameController,
-                validator: (value) => (value == null || value.isEmpty) ? 'Введите имя' : null,
+                isRequired: true,
               ),
               const SizedBox(height: 20),
 
@@ -68,7 +68,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               CustomFormField(
                 label: 'Отчество*',
                 controller: _middleNameController,
-                validator: (value) => (value == null || value.isEmpty) ? 'Введите отчество' : null,
+                isRequired: true,
               ),
               const SizedBox(height: 20),
 
