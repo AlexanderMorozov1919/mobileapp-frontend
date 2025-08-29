@@ -1,3 +1,4 @@
+import 'package:demo_app/presentation/pages/creat_call_screen.dart';
 import 'package:demo_app/presentation/pages/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -274,6 +275,16 @@ List<Map<String, dynamic>> _getPatientsFromCall(Map<String, dynamic> call) {
           ),
           Expanded(child: _buildContent()),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateCallScreen()),
+          );
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
       ),
     );
   }

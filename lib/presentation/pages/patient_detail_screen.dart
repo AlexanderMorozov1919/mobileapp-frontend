@@ -1,3 +1,4 @@
+import 'package:demo_app/presentation/widgets/phone_field.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart'; // Добавить эту строку
@@ -351,50 +352,59 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
 
-  Widget _buildContactField(String label, String key, String value, bool isRequired, TextInputType? keyboardType, {int maxLines = 1}) {
-      return _isEditing
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                CustomFormField(
-                  label: label,
-                  controller: _controllers[key]!,
-                  isRequired: isRequired,
-                  keyboardType: keyboardType,
-                  maxLines: maxLines,
-                  showLabelInside: false,
-                  inputFormatters: label == 'Телефон'
-                  ? [
-                      // Авто-подстановка "+"
-                      TextInputFormatter.withFunction((oldValue, newValue) {
-                        String text = newValue.text;
-
-                        // Если пользователь стёр + или ввёл без него — добавляем обратно
-                        if (!text.startsWith('+')) {
-                          text = '+' + text.replaceAll('+', '');
-                        }
-
-                        // Ограничение длины до 15 символов
-                        if (text.length > 15) {
-                          text = text.substring(0, 15);
-                        }
-
-                        return TextEditingValue(
-                          text: text,
-                          selection: TextSelection.collapsed(offset: text.length),
-                        );
-                      }),
-                      FilteringTextInputFormatter.allow(RegExp(r'^\+?\d*')),
-                      LengthLimitingTextInputFormatter(15),
-                    ]
-                  : null,
-                ),
-              ],
-            )
-          : _buildReadOnlyField(label, value, maxLines: maxLines);
+  Widget _buildContactField(String label, String key, String value, bool isRequired, TextInputType? keyboardType, {int maxLines = 1,}) {
+    if (_isEditing) {
+      // Режим редактирования — обычный текстовый input
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          CustomFormField(
+            label: label,
+            controller: _controllers[key]!,
+            isRequired: isRequired,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            showLabelInside: false,
+            inputFormatters: label == 'Телефон'
+                ? [
+                    // Авто-подстановка "+"
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      String text = newValue.text;
+                      if (!text.startsWith('+')) {
+                        text = '+' + text.replaceAll('+', '');
+                      }
+                      if (text.length > 15) text = text.substring(0, 15);
+                      return TextEditingValue(
+                        text: text,
+                        selection: TextSelection.collapsed(offset: text.length),
+                      );
+                    }),
+                    FilteringTextInputFormatter.allow(RegExp(r'^\+?\d*')),
+                    LengthLimitingTextInputFormatter(15),
+                  ]
+                : null,
+          ),
+        ],
+      );
+    } else {
+      // Режим просмотра
+      if (label == 'Телефон') {
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: PhoneField(phone: value),
+          ),
+        );
+      } else {
+        return _buildReadOnlyField(label, value, maxLines: maxLines);
+      }
     }
+  }
 
 
   Widget _buildDocumentField(String label, String key, String value, bool isRequired, List<TextInputFormatter>? formatters) {
@@ -418,7 +428,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
 
   Widget _buildReadOnlyField(String label, String value, {int maxLines = 1}) {
     return SizedBox(
-      width: double.infinity, // ⬅️ теперь тянется на всю ширину
+      width: double.infinity,
       child: Card(
         elevation: 2,
         margin: const EdgeInsets.symmetric(vertical: 4),
@@ -530,55 +540,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ],
           )
         : _buildReadOnlyField('Дата рождения', patient.formattedBirthDate);
-  }
-
-  
-  // Виджет для полей паспорта
-  Widget _buildPassportFields(Patient patient) {
-    return _isEditing
-        ? Column(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Серия паспорта', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  CustomFormField(
-                    label: 'Серия паспорта',
-                    controller: _controllers['passportSeries']!,
-                    maxLength: 4,
-                    keyboardType: TextInputType.number,
-                    showLabelInside: false,
-                    isRequired: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Номер паспорта', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  CustomFormField(
-                    label: 'Номер паспорта',
-                    controller: _controllers['passportNumber']!,
-                    maxLength: 6,
-                    keyboardType: TextInputType.number,
-                    showLabelInside: false,
-                    isRequired: true,
-                  ),
-                ],
-              ),
-            ],
-          )
-        : ListTile(
-            title: const Text('Паспорт', style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text(
-              patient.passportSeries.isNotEmpty && patient.passportNumber.isNotEmpty
-                  ? '${patient.passportSeries} ${patient.passportNumber}'
-                  : 'Не указан',
-            ),
-          );
   }
 
 

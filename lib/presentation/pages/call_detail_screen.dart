@@ -1,3 +1,5 @@
+import 'package:demo_app/presentation/pages/pdf_sign_screen.dart';
+import 'package:demo_app/presentation/pages/pdf_view_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_client.dart';
@@ -7,6 +9,7 @@ import 'patient_detail_screen.dart';
 import '../widgets/date_picker_icon_button.dart';
 import '../widgets/custom_card.dart';
 import '../widgets/status_chip.dart';
+import 'package:signature/signature.dart';
 
 class CallDetailScreen extends StatefulWidget {
   final Map<String, dynamic> call;
@@ -356,50 +359,185 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patient) {
-    return CustomCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Icon(
-          patient['hasConclusion'] ? Icons.check_circle : Icons.person,
-          color: patient['hasConclusion'] ? Colors.green : Theme.of(context).primaryColor,
-          size: 32,
-        ),
-        title: Text(
-          (patient['lastName'] ?? '') + ' ' + (patient['firstName'] ?? '') + ' ' + (patient['middleName'] ?? '').trim().replaceAll(RegExp(r'\s+'), ' ').trim(),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (patient['birthDate'] != null)
-              Text('ДР: ${DateFormat('dd.MM.yyyy').format(patient['birthDate'])}'),
-            if (patient['isMale'] != null)
-              Text(patient['isMale'] ? 'Мужской' : 'Женский'),
-            const SizedBox(height: 4),
-            Text(
-              patient['hasConclusion'] 
-                  ? 'Обследование завершено' 
-                  : 'Требуется обследование',
-              style: TextStyle(
-                color: patient['hasConclusion'] ? Colors.green : Colors.orange,
-              ),
-            ),
-          ],
-        ),
-        trailing: patient['hasConclusion']
-            ? null
-            : ElevatedButton(
-                child: const Text('Заключение'),
-                onPressed: () => _startConsultation(patient),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  minimumSize: const Size(110, 36), // Минимальные размеры (ширина, высота)
+    final fullName =
+        '${patient['lastName'] ?? ''} ${patient['firstName'] ?? ''} ${patient['middleName'] ?? ''}'.trim();
+    final birthDate = patient['birth_date'] != null
+        ? DateFormat('dd.MM.yyyy').format(DateTime.parse(patient['birth_date']))
+        : '';
+    final age = patient['birth_date'] != null
+        ? DateTime.now().year - DateTime.parse(patient['birth_date']).year
+        : '';
+
+    return DefaultTabController(
+      length: 2,
+      child: CustomCard(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Левая колонка (основная информация)
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(fullName,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text('Дата рождения: $birthDate'),
+                    Text('Возраст: $age лет'),
+                    if (patient['is_male'] != null)
+                      Text(patient['is_male'] ? 'Мужской' : 'Женский'),
+                    const SizedBox(height: 8),
+                    Text(
+                      patient['hasConclusion']
+                          ? 'Обследование завершено'
+                          : 'Требуется обследование',
+                      style: TextStyle(
+                        color:
+                            patient['hasConclusion'] ? Colors.green : Colors.orange,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-        onTap: () => _showPatientOptions(patient),
+
+              const SizedBox(width: 12),
+
+              // Правая колонка (табы с прививками и согласием)
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const TabBar(
+                      tabs: [
+                        Tab(text: "Прививки"),
+                        Tab(text: "Согласие"),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 180, // фиксируем высоту, чтобы табы не схлопывались
+                      child: TabBarView(
+                        children: [
+                          // Прививки
+                          Center(
+                            child: Text(
+                              "Прививки: пока пусто",
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ),
+
+                          // Согласие
+                         Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 100,
+                                    maxWidth: 200,
+                                    minHeight: 36,
+                                    maxHeight: 50,
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.picture_as_pdf, size: 18),
+                                    label: const Text('Открыть PDF', textAlign: TextAlign.center),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    onPressed: () async {
+                                      final receptionId = patient['receptionId']?.toString();
+                                      if (receptionId != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PdfViewerScreen(receptionId: receptionId),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 100,
+                                    maxWidth: 200,
+                                    minHeight: 36,
+                                    maxHeight: 50,
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.edit, size: 18),
+                                    label: const Text('Подписать', textAlign: TextAlign.center),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    onPressed: () async {
+                                      final receptionId = patient['receptionId']?.toString();
+                                      if (receptionId != null) {
+                                        final apiClient = Provider.of<ApiClient>(context, listen: false);
+                                        try {
+                                          final pdfData = await apiClient.getReceptionPdf(receptionId);
+                                          final updated = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PdfSignatureScreen(
+                                                receptionId: receptionId,
+                                                pdfData: pdfData,
+                                              ),
+                                            ),
+                                          );
+                                          if (updated == true) {
+                                            // можно обновить данные
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Ошибка загрузки PDF: $e')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Кнопка заключения (справа снизу)
+              IconButton(
+                icon: const Icon(Icons.note_alt, color: Colors.blue),
+                tooltip: "Заключение",
+                onPressed: () => _startConsultation(patient),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+
+
+
 
   void _startConsultation(Map<String, dynamic> patient) {
     final fullName = '${patient['lastName'] ?? ''} ${patient['firstName'] ?? ''} ${patient['middleName'] ?? ''}'.trim();
@@ -426,23 +564,6 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
     });
   }
 
-  void _checkCallCompletion() {
-    final allCompleted = widget.call['patients']
-        .every((patient) => patient['hasConclusion'] == true);
-    if (allCompleted) {
-      setState(() {
-        widget.call['isCompleted'] = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Вызов завершен!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   void _addPatient() {
     showDialog(
       context: context,
@@ -461,6 +582,36 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
         },
       ),
     );
+  }
+
+  void _openConsentDocument(Map<String, dynamic> patient) {
+    final receptionId = patient['receptionId']?.toString(); // <-- используем правильный ключ
+    print('ReceptionId: $receptionId'); // для проверки
+    if (receptionId == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfViewerScreen(receptionId: receptionId),
+      ),
+    );
+  }
+
+  void _checkCallCompletion() {
+    final allCompleted = widget.call['patients']
+        .every((patient) => patient['hasConclusion'] == true);
+    if (allCompleted) {
+      setState(() {
+        widget.call['isCompleted'] = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Вызов завершен!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _updateCallStatusIfCompleted() async {
@@ -505,10 +656,15 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
         title: Text(fullName),
         content: const Text('Выберите действие'),
         actions: [
-          // УДАЛЕНА КНОПКА "Карта пациента"
-
           // Оставляем только кнопку для начала обследования (если не завершено)
           if (!patient['hasConclusion'])
+            TextButton(
+              child: const Text('Согласие на осмотр'),
+              onPressed: () {
+                Navigator.pop(context);
+                _openConsentDocument(patient);
+              },
+            ),
             TextButton(
               child: const Text('Начать обследование'),
               onPressed: () {
@@ -532,6 +688,9 @@ class _CallDetailScreenState extends State<CallDetailScreen> {
       ),
     );
   }
+
+
+
 
   void _openPatientDetails(Map<String, dynamic> patient) {
     final patientData = {

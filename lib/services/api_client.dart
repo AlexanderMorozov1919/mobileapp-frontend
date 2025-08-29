@@ -15,8 +15,8 @@ class ApiClient {
   final AuthService _authService;
 
   // final String baseUrl = 'http://192.168.29.112:65321/api/v1'; // новая 
-  final String baseUrl = 'https://devapp2.kvant-cloud.ru/api/v1'; // новая с сертификатом
-  // final String baseUrl = 'http://192.168.30.139:8080/api/v1'; // localhost
+  // final String baseUrl = 'https://devapp2.kvant-cloud.ru/api/v1'; // новая с сертификатом
+  final String baseUrl = 'http://192.168.30.139:8080/api/v1'; // localhost
   
 
   ApiClient(this._authService) {
@@ -78,12 +78,107 @@ class ApiClient {
     );
   }
 
+  // Получение PDF с сервера
+  Future<Uint8List> getReceptionPdf(String receptionId) async {
+    return _handleApiCall(
+      () async {
+        final response = await _dio.get(
+          '/emergency/pdf/$receptionId',
+          options: Options(responseType: ResponseType.bytes),
+        );
+
+        if (response.statusCode != 200) {
+          throw ApiError(
+            statusCode: response.statusCode,
+            message: 'Ошибка загрузки PDF',
+            rawError: response.data,
+          );
+        }
+
+        return response.data as Uint8List;
+      },
+      errorMessage: 'Ошибка при загрузке PDF',
+    );
+  }
+
+  // Отправка подписанного PDF на сервер с подписью
+  Future<void> uploadSignedPdf({
+    required Uint8List pdfBytes,
+    required String receptionId,
+    required String filename,
+    Uint8List? signatureBytes, // подпись optional
+  }) async {
+    return _handleApiCall(
+      () async {
+        final formDataMap = {
+          'file': MultipartFile.fromBytes(pdfBytes, filename: filename),
+        };
+
+        // если есть подпись, добавляем её в formData
+        if (signatureBytes != null) {
+          formDataMap['signature'] =
+              MultipartFile.fromBytes(signatureBytes, filename: 'signature.png');
+        }
+
+        final formData = FormData.fromMap(formDataMap);
+
+        final response = await _dio.post(
+          '/emergency/pdf/$receptionId',
+          data: formData,
+        );
+
+        if (response.statusCode != 200) {
+          throw ApiError(
+            statusCode: response.statusCode,
+            message: 'Ошибка отправки PDF',
+            rawError: response.data,
+          );
+        }
+
+        return response.data;
+      },
+      errorMessage: 'Ошибка при отправке подписанного PDF',
+    );
+  }
+
+
+
+  Future<Map<String, dynamic>> createEmergencyCall({
+    required int doctorId,
+    required String address,
+    required String phone,
+    required bool emergency,
+    required String description,
+  }) async {
+    return _handleApiCall(
+      () async {
+        final data = {
+          "doctor_id": doctorId,
+          "address": address,
+          "phone": phone,
+          "emergency": emergency,
+          "description": description,
+        };
+
+        final response = await _dio.post(
+          '/emergency/smp',
+          data: data,
+          options: Options(
+            contentType: Headers.jsonContentType,
+          ),
+        );
+
+        return response.data as Map<String, dynamic>;
+      },
+      errorMessage: 'Ошибка создания вызова',
+    );
+  }
+
   void setCurrentDoctor(Doctor doctor) {
     _currentDoctor = doctor;
     debugPrint('✅ Доктор установлен: ID=${doctor.id}');
   }
 
-  // Добавляем метод getToken
   Future<String?> getToken() async {
     return await _authService.getToken();
   }
